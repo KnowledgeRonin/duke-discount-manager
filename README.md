@@ -1,60 +1,24 @@
-<h1>Discount Coupon Template Manager System</h1>
+# Duke Discount Manager System
 
- ### [Figma Prototype or Demo Video](https://youtu.be/7eJexJVCqJo)
+Duke Discount Manager is a modern web application designed to streamline the creation, editing, and management of discount templates for a business environment with and user-friendly interface that centralizes all operations into a single authenticated user.
 
-<h2>Description</h2>
-This project involved a full redesign of the Espacio Team / Espacio Network website as part of a volunteer collaboration. The existing site was outdated and lacked modern UX/UI standards. The goal was to improve visual identity, user experience, and overall site structure using WordPress as CMS and Figma for mockup design.
-<br />
+The project is built entirely from scratch with a forward-thinking architecture focused on scalability, maintainability, and performance.
 
 
-<h2>Languages and Utilities Used</h2>
+## Technologies Used
 
-- <b>WordPress</b> 
-- <b>v0.dev</b>
-- <b>Figma</b>
+- React (with functional components and hooks)
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+- shadcn/ui (for a clean, consistent, component-driven UI)
+- Turbopack (development bundler included in Next.js)
 
-<h2>Environments Used </h2>
+## Environments Used
 
-- <b>CMS: WordPress 6.x</b>
-- <b>Builder: Elementor / Gutenberg</b>
-
-<h2>Program walk-through:</h2>
-
-<p align="center">
-Launch the utility: <br/>
-<img src="https://i.imgur.com/62TgaWL.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-<br />
-<br />
-Select the disk:  <br/>
-<img src="https://i.imgur.com/tcTyMUE.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-<br />
-<br />
-Enter the number of passes: <br/>
-<img src="https://i.imgur.com/nCIbXbg.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-<br />
-<br />
-Confirm your selection:  <br/>
-<img src="https://i.imgur.com/cdFHBiU.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-<br />
-<br />
-Wait for process to complete (may take some time):  <br/>
-<img src="https://i.imgur.com/JL945Ga.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-<br />
-<br />
-Sanitization complete:  <br/>
-<img src="https://i.imgur.com/K71yaM2.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-<br />
-<br />
-Observe the wiped disk:  <br/>
-<img src="https://i.imgur.com/AeZkvFQ.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-</p>
-
-<!--
- ```diff
-- text in red
-+ text in green
-! text in orange
-# text in gray
-@@ text in purple (and bold)@@
-```
---!>
+- Runtime: Node.js 18+
+- Framework: Next.js 14+
+- Package Manager: npm / pnpm / yarn
+- Development Server: Turbopack (via next dev)
+- Styling System: Tailwind CSS + CSS variables
+- UI Components: shadcn/ui library
