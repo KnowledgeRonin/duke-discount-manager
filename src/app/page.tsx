@@ -14,49 +14,51 @@ interface Block {
 
 export default function Home() {
 
+  // Define the object data that will be managed and rendered within the CanvasArea
   const [blocks, setBlocks] = useState<Block[]>([]);
 
+  // Stores the type of template the user is dragging at any given time
   const [activeTemplateType, setActiveTemplateType] = useState<string | null>(null);
 
-  // 3. Función que se ejecuta cuando se suelta un elemento en el Canvas
+  // Function that executes when an element is dropped onto the CanvasArea
   const handleDropTemplate = (templateType: string, pos: { x: number; y: number }) => {
         
-      // Simplemente crea un bloque de texto para este ejemplo
+      // Create a block of text for this example
       const newBlock: Block = {
-          id: `block-${Date.now()}`, // ID único
+          id: `block-${Date.now()}`, // Unique ID based on timestamp
           type: templateType,
           x: pos.x,
           y: pos.y,
           text: `Nuevo ${templateType}`,
       };
 
-      // 4. Actualiza el estado, lo que dispara un nuevo renderizado de CanvasArea
+      // Update the state, which triggers a new rendering of CanvasArea
       setBlocks((prevBlocks) => [...prevBlocks, newBlock]);
   };
 
-  // 1. DND-KIT: Se ejecuta cuando un arrastre comienza
+  // 1. DND-KIT: It runs when a drag starts
   const handleDragStart = (event: any) => {
-      // Almacena el tipo de plantilla que se está arrastrando (p. ej., "RECTANGLE")
+      // Stores the type of template being dragged (e.g., "RECTANGLE")
       setActiveTemplateType(event.active.id); 
   };
 
-  // 2. DND-KIT: Se ejecuta cuando el arrastre finaliza
+  // 2. DND-KIT: It runs when the drag finishes
   const handleDragEnd = (event: DragEndEvent) => {
-      // Lógica de soltado:
-      // 'over' indica dónde se soltó. Si se soltó sobre el 'canvas-area', procesamos el drop.
+
+      // 'over' indicates where it was dropped. If it was dropped over the 'canvas-area', we process the drop
       if (event.over?.id === 'canvas-area' && activeTemplateType) {
             
-          // Calculamos la posición del puntero para el nuevo bloque
-          // Nota: dnd-kit no proporciona coordenadas de soltado relativas al destino
-          // de forma simple en este contexto, así que usaremos coordenadas dummy (o
-          // se requeriría calcularlo manualmente basado en el evento).
-          // Para el ejemplo, usaremos un punto central:
-          const pos = { x: 400, y: 300 }; // Posición fija para simplicidad
+          // Calculate the pointer position for the new block
+          // Note: dnd-kit does not provide drop coordinates relative to the destination
+          // in a simple way in this context, so we will use dummy coordinates (or
+          // it would be necessary to calculate it manually based on the event).
+          // For this example, we will use a central point:
+          const pos = { x: 400, y: 300 }; // Fixed position for simplicity
 
           handleDropTemplate(activeTemplateType, pos);
       }
         
-      // Reinicia el tipo de plantilla activa
+      // Reset the active template type
       setActiveTemplateType(null);
   };
 
@@ -66,10 +68,10 @@ export default function Home() {
                 <Header />
                 
                 <div className="flex flex-1 w-full">
-                    {/* Sidebar ahora es solo la fuente del arrastre */}
+                    {/* Sidebar is now only the drag source */}
                     <Sidebar /> 
                     
-                    {/* CanvasArea ahora es la zona de soltado (Droppable) */}
+                    {/* CanvasArea is now the drop zone */}
                     <CanvasArea 
                         blocks={blocks}
                     />

@@ -1,7 +1,8 @@
 "use client";
 
-import { Stage, Layer, Text, Transformer } from "react-konva";
+import { Stage, Layer, Text, Transformer, Rect } from "react-konva";
 import { useRef, useState } from "react";
+import { useDroppable } from "@dnd-kit/core";
 
 interface Block {
     id: string;
@@ -9,93 +10,122 @@ interface Block {
     x: number;
     y: number;
     text: string;
-    // Puedes añadir más propiedades (color, width, height, etc.) aquí
 }
 
-// ➡️ Definición de las props de CanvasArea
+// ➡️ Definition of CanvasArea props
 interface CanvasAreaProps {
-    onDropTemplate: (type: string, pos: { x: number; y: number }) => void;
-    blocks: Block[]; // ⬅️ Nuevo: Ahora recibimos la lista de bloques
+    // For the holy spirit thank god onDropTemplate is no longer used here; it's used in Home with DndContext
+    blocks: Block[]; 
 }
 
-export function CanvasArea({ onDropTemplate, blocks }: CanvasAreaProps) {
+export function CanvasArea({ blocks }: CanvasAreaProps) {
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
+  // 1. DND-KIT: Hook useDroppable
+    const { isOver, setNodeRef } = useDroppable({
+        id: 'canvas-area', // ID that will be used in handleDragEnd of Home
+    });
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    
-    // 1. Recupera los datos del sidebar
-    const templateType = e.dataTransfer.getData("application/template-type");
-    if (templateType) {
-      // 2. Calcula la posición del mouse relativa al canvas
-      const rect = e.target.getBoundingClientRect();
-      const pos = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      };
+    const [selectedId, setSelectedId] = useState<string | null>(null);
 
-      // 3. Llama a una función en el componente padre para agregar el bloque
-      onDropTemplate(templateType, pos);
-    }
-  };
-
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+    // Visual style to indicate that a draggable is over this area
+    const droppableStyle = {
+        opacity: isOver ? 0.9 : 1,
+        border: isOver ? '4px dashed #3B82F6' : '1px solid #e5e7eb',
+    };
 
   return (
-    <div className="w-full h-full border rounded-xl bg-gray-100" 
-         onDragOver={handleDragOver} // Necesario para permitir el "drop"
-         onDrop={handleDrop}         // Llama a onDropTemplate
-      >
-      
-      <Stage
-        width={800}
-        height={600}
-        onMouseDown={(e) => {
-          // Deselección cuando se hace clic fuera
-          const clickedEmpty = e.target === e.target.getStage();
-          if (clickedEmpty) setSelectedId(null);
-        }}
-      >
-        <Layer>
-          {blocks.map((block) => (
-            // Usamos el 'type' para decidir qué componente renderizar
-            <ElementWrapper
-                key={block.id}
-                block={block}
-                isSelected={selectedId === block.id}
-                onSelect={() => setSelectedId(block.id)}
+    <div 
+            // 2. DND-KIT: Assign the node reference
+            ref={setNodeRef} 
+            style={droppableStyle}
+            className="w-full h-full rounded-xl bg-gray-100 flex justify-center items-center" 
+        >
+            <Stage
+                width={800}
+                height={600}
+                className="shadow-xl bg-white"
+                onMouseDown={(e) => {
+                    // Deselection when clicking outside
+                    const clickedEmpty = e.target === e.target.getStage();
+                    if (clickedEmpty) setSelectedId(null);
+                }}
+            >
+                <Layer>
+                    {blocks.map((block) => (
+                        // We use the 'type' to decide which component to render.
+                        <ElementWrapper
+                            key={block.id}
+                            block={block}
+                            isSelected={selectedId === block.id}
+                            onSelect={() => setSelectedId(block.id)}
+                        />
+                    ))}
+                </Layer>
+            </Stage>
+            {blocks.length === 0 && (
+                <p className="absolute text-gray-500 text-lg pointer-events-none">
+                    Arrastra una plantilla aquí
+                </p>
+            )}
+        </div>
+  );
+}
+
+function ElementWrapper({ block, isSelected, onSelect }: any) {
+    if (block.type === 'RECTANGLE') {
+        return (
+            <DraggableRectangle
+                id={block.id}
+                x={block.x}
+                y={block.y}
+                text={block.text}
+                isSelected={isSelected}
+                onSelect={onSelect}
             />
-          ))}
-        </Layer>
-      </Stage>
-    </div>
-  );
+        );
+    }
+    // You can add more item types here
+    return null;
 }
 
-function DraggableText({ id, text, x, y, isSelected, onSelect }: any) {
-  const shapeRef = useRef<any>(null);
-  const trRef = useRef<any>(null);
+// Konva component for rectangle
+function DraggableRectangle({ id, text, x, y, isSelected, onSelect }: any) {
+    const shapeRef = useRef<any>(null);
+    const trRef = useRef<any>(null);
 
-  // Activar transformador cuando seleccionas el elemento
-  if (isSelected && trRef.current && shapeRef.current) {
-    trRef.current.nodes([shapeRef.current]);
-    trRef.current.getLayer().batchDraw();
-  }
+    // Use useEffect to handle selection and the transformer
+    if (isSelected && trRef.current && shapeRef.current) {
+        trRef.current.nodes([shapeRef.current]);
+        trRef.current.getLayer().batchDraw();
+    }
 
-  return (
-    <>
-      <Text
-        ref={shapeRef}
-        text={text}
-        x={x}
-        y={y}
-        fontSize={24}
-        draggable
-        onClick={onSelect}
-        onTap={onSelect}
-      />
-      {isSelected && <Transformer ref={trRef} rotateEnabled={true} />}
-    </>
-  );
+    return (
+        <>
+            <Rect
+                ref={shapeRef}
+                x={x}
+                y={y}
+                width={150}
+                height={80}
+                fill="#81E6D9" // Pretty color
+                stroke="#000"
+                strokeWidth={2}
+                cornerRadius={10}
+                draggable
+                onClick={onSelect}
+                onTap={onSelect}
+            />
+            <Text
+                text={text}
+                x={x + 10}
+                y={y + 30}
+                fontSize={16}
+                fill="#000"
+                width={130}
+                align="center"
+                listening={false} // Use useEffect to handle selection and the transformer
+            />
+            {isSelected && <Transformer ref={trRef} rotateEnabled={true} />}
+        </>
+    );
 }
