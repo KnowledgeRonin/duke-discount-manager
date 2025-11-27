@@ -70,13 +70,14 @@ export default function Home() {
                 <Header />
                 
                 <div className="flex flex-1 w-full">
-                    {/* Sidebar is now only the drag source */}
-                    <Sidebar /> 
                     
                     {/* CanvasArea is now the drop zone */}
                     <CanvasArea 
                         blocks={blocks}
                     />
+
+                    {/* Sidebar is now only the drag source */}
+                    <Sidebar /> 
                 </div>
             </div>
       </DndContext>
