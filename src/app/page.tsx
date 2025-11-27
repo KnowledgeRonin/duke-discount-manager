@@ -1,3 +1,5 @@
+"use client";
+
 import { Header } from "@/components/header";
 import { CanvasArea } from "@/components/canvas";
 import { Sidebar } from "@/components/sidebar";
