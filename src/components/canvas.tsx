@@ -38,7 +38,7 @@ export function CanvasArea({ blocks }: CanvasAreaProps) {
             // 2. DND-KIT: Assign the node reference
             ref={setNodeRef} 
             style={droppableStyle}
-            className="w-full h-full rounded-xl bg-gray-100 flex justify-center items-center" 
+            className="w-full h-full bg-gray-100 flex justify-center items-center overflow-hidden" 
         >
             <Stage
                 width={800}
@@ -64,7 +64,7 @@ export function CanvasArea({ blocks }: CanvasAreaProps) {
             </Stage>
             {blocks.length === 0 && (
                 <p className="absolute text-gray-500 text-lg pointer-events-none">
-                    Arrastra una plantilla aquí
+                    Drag a template here
                 </p>
             )}
         </div>

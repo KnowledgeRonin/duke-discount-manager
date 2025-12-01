@@ -1,6 +1,5 @@
 "use client";
 
-import { Header } from "@/components/header";
 import { CanvasArea } from "@/components/canvas";
 import { Sidebar } from "@/components/sidebar";
 import { useState } from "react";
@@ -66,20 +65,22 @@ export default function Home() {
 
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <div className="flex flex-col min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-                <Header />
-                
+
                 <div className="flex flex-1 w-full">
-                    
                     {/* CanvasArea is now the drop zone */}
                     <CanvasArea 
                         blocks={blocks}
                     />
 
-                    {/* Sidebar is now only the drag source */}
-                    <Sidebar /> 
+                    
                 </div>
-            </div>
+
+                <aside className="fixed top-0 right-0 z-40 w-80 h-screen transition-transform border-l border-gray-200 bg-white" aria-label="Sidebar">
+                    {/* Sidebar is now only the drag source */}
+                    <Sidebar />
+                </aside>
+                 
+            
       </DndContext>
   );
 }
