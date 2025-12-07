@@ -1,7 +1,7 @@
 "use client";
 
 import { Stage, Layer, Text, Transformer, Rect } from "react-konva";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { useDroppable } from "@dnd-kit/core";
 
 interface Block {
@@ -10,6 +10,8 @@ interface Block {
     x: number;
     y: number;
     text: string;
+    width?: number;
+    height?: number;
 }
 
 // ➡️ Definition of CanvasArea props
@@ -33,16 +35,21 @@ export function CanvasArea({ blocks }: CanvasAreaProps) {
         border: isOver ? '4px dashed #3B82F6' : '1px solid #e5e7eb',
     };
 
+    const { dimensions, containerRef } = useContainerDimensions(800, 600);
+
   return (
-    <div 
-            // 2. DND-KIT: Assign the node reference
-            ref={setNodeRef} 
+    <div className="flex flex-1 w-full h-full bg-gray-100 justify-center items-center overflow-auto">
+        <div 
+            ref={(node) => {
+                setNodeRef(node);
+                containerRef.current = node;
+            }}
             style={droppableStyle}
-            className="w-full h-full bg-gray-100 flex justify-center items-center overflow-hidden" 
-        >
+            className="w-[75vw] h-[90vh] bg-gray-100 flex justify-center items-center overflow-hidden"
+            >
             <Stage
-                width={800}
-                height={600}
+                width={dimensions.width}
+                height={dimensions.height}
                 className="shadow-xl bg-white"
                 onMouseDown={(e) => {
                     // Deselection when clicking outside
@@ -62,12 +69,14 @@ export function CanvasArea({ blocks }: CanvasAreaProps) {
                     ))}
                 </Layer>
             </Stage>
+            
             {blocks.length === 0 && (
-                <p className="absolute text-gray-500 text-lg pointer-events-none">
+                <p className="absolute text-gray-500 text-lg">
                     Drag a template here
                 </p>
             )}
         </div>
+    </div>
   );
 }
 
@@ -79,6 +88,8 @@ function ElementWrapper({ block, isSelected, onSelect }: any) {
                 x={block.x}
                 y={block.y}
                 text={block.text}
+                width={block.width || 150} 
+                height={block.height || 80}
                 isSelected={isSelected}
                 onSelect={onSelect}
             />
@@ -89,7 +100,7 @@ function ElementWrapper({ block, isSelected, onSelect }: any) {
 }
 
 // Konva component for rectangle
-function DraggableRectangle({ id, text, x, y, isSelected, onSelect }: any) {
+function DraggableRectangle({ id, text, x, y, width, height, isSelected, onSelect }: any) {
     const shapeRef = useRef<any>(null);
     const trRef = useRef<any>(null);
 
@@ -105,27 +116,59 @@ function DraggableRectangle({ id, text, x, y, isSelected, onSelect }: any) {
                 ref={shapeRef}
                 x={x}
                 y={y}
-                width={150}
-                height={80}
-                fill="#81E6D9" // Pretty color
-                stroke="#000"
-                strokeWidth={2}
-                cornerRadius={10}
+                width={width}
+                height={height}
+                fill="#F3F4F6"
+                stroke="#E5E7EB"
+                strokeWidth={1}
+                cornerRadius={6}
                 draggable
                 onClick={onSelect}
                 onTap={onSelect}
             />
-            <Text
+            {/*<Text
                 text={text}
                 x={x + 10}
-                y={y + 30}
+                y={y + 30} 
                 fontSize={16}
                 fill="#000"
                 width={130}
                 align="center"
                 listening={false} // Use useEffect to handle selection and the transformer
-            />
+            />*/}
             {isSelected && <Transformer ref={trRef} rotateEnabled={true} />}
         </>
     );
+}
+
+export function useContainerDimensions(initialWidth: number, initialHeight: number) {
+    
+    const [dimensions, setDimensions] = useState({
+        width: initialWidth,
+        height: initialHeight,
+    });
+    
+    const containerRef = useRef<HTMLDivElement | null>(null);
+
+    const updateSize = useCallback(() => {
+        if (containerRef.current) {
+
+            const height = containerRef.current.offsetHeight;
+            const width = containerRef.current.offsetWidth;
+            
+            setDimensions({
+                width: width,
+                height: height
+            });
+        }
+    }, []);
+
+    useEffect(() => {
+        updateSize();
+        
+        window.addEventListener('resize', updateSize);
+        return () => window.removeEventListener('resize', updateSize);
+    }, [updateSize]);
+
+    return { dimensions, containerRef, updateSize };
 }

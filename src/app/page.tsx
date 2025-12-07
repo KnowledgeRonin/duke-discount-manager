@@ -11,6 +11,8 @@ interface Block {
     x: number;
     y: number;
     text: string;
+    width?: number;
+    height?: number;
 }
 
 export default function Home() {
@@ -22,7 +24,7 @@ export default function Home() {
   const [activeTemplateType, setActiveTemplateType] = useState<string | null>(null);
 
   // Function that executes when an element is dropped onto the CanvasArea
-  const handleDropTemplate = (templateType: string, pos: { x: number; y: number }) => {
+  const handleDropTemplate = (templateType: string, pos: { x: number; y: number }, size?: { w: number; h: number }) => {
         
       // Create a block of text for this example
       const newBlock: Block = {
@@ -31,6 +33,8 @@ export default function Home() {
           x: pos.x,
           y: pos.y,
           text: `Nuevo ${templateType}`,
+          width: size?.w || 150, 
+          height: size?.h || 100,
       };
 
       // Update the state, which triggers a new rendering of CanvasArea
@@ -40,11 +44,12 @@ export default function Home() {
   // 1. DND-KIT: It runs when a drag starts
   const handleDragStart = (event: any) => {
       // Stores the type of template being dragged (e.g., "RECTANGLE")
-      setActiveTemplateType(event.active.id); 
+      setActiveTemplateType(event.active.id);
   };
 
   // 2. DND-KIT: It runs when the drag finishes
   const handleDragEnd = (event: DragEndEvent) => {
+          const { active, over } = event;
 
       // 'over' indicates where it was dropped. If it was dropped over the 'canvas-area', we process the drop
       if (event.over?.id === 'canvas-area' && activeTemplateType) {
@@ -56,7 +61,14 @@ export default function Home() {
           // For this example, we will use a central point:
           const pos = { x: 400, y: 300 }; // Fixed position for simplicity
 
-          handleDropTemplate(activeTemplateType, pos);
+          const payload = active.data.current;
+          
+          const sizeData = {
+              w: payload?.w,
+              h: payload?.h
+          };
+
+          handleDropTemplate(activeTemplateType, pos, sizeData);
       }
         
       // Reset the active template type
@@ -66,20 +78,20 @@ export default function Home() {
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
 
-                <div className="flex flex-1 w-full">
+            <main className="flex h-screen w-screen overflow-hidden">
+                <div className="w-screen h-screen">
                     {/* CanvasArea is now the drop zone */}
                     <CanvasArea 
                         blocks={blocks}
                     />
 
-                    
                 </div>
 
-                <aside className="fixed top-0 right-0 z-40 w-80 h-screen transition-transform border-l border-gray-200 bg-white" aria-label="Sidebar">
+                <aside className="w-80 h-screen border-l border-gray-200 bg-white" aria-label="Sidebar">
                     {/* Sidebar is now only the drag source */}
                     <Sidebar />
                 </aside>
-                 
+            </main>     
             
       </DndContext>
   );
