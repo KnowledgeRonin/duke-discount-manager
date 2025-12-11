@@ -3,6 +3,7 @@
 import { Stage, Layer, Text, Transformer, Rect } from "react-konva";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useDroppable } from "@dnd-kit/core";
+import { RefObject } from "react";
 
 interface Block {
     id: string;
@@ -17,10 +18,12 @@ interface Block {
 // ➡️ Definition of CanvasArea props
 interface CanvasAreaProps {
     // For the holy spirit thank god onDropTemplate is no longer used here; it's used in Home with DndContext
-    blocks: Block[]; 
+    blocks: Block[];
+    dimensions: { width: number; height: number };
+    containerRef: RefObject<HTMLDivElement | null>;
 }
 
-export function CanvasArea({ blocks }: CanvasAreaProps) {
+export function CanvasArea({ blocks, dimensions, containerRef }: CanvasAreaProps) {
 
   // 1. DND-KIT: Hook useDroppable
     const { isOver, setNodeRef } = useDroppable({
@@ -33,9 +36,8 @@ export function CanvasArea({ blocks }: CanvasAreaProps) {
     const droppableStyle = {
         opacity: isOver ? 0.9 : 1,
         border: isOver ? '4px dashed #3B82F6' : '1px solid #e5e7eb',
+        borderRadius: '10px'
     };
-
-    const { dimensions, containerRef } = useContainerDimensions(800, 600);
 
   return (
     <div className="flex flex-1 w-full h-full bg-gray-100 justify-center items-center overflow-auto">

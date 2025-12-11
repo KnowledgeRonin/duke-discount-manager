@@ -1,6 +1,6 @@
 "use client";
 
-import { CanvasArea } from "@/components/canvas";
+import { CanvasArea, useContainerDimensions } from "@/components/canvas";
 import { Sidebar } from "@/components/sidebar";
 import { useState } from "react";
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
@@ -22,6 +22,8 @@ export default function Home() {
 
   // Stores the type of template the user is dragging at any given time
   const [activeTemplateType, setActiveTemplateType] = useState<string | null>(null);
+
+  const { dimensions, containerRef } = useContainerDimensions(800, 600);
 
   // Function that executes when an element is dropped onto the CanvasArea
   const handleDropTemplate = (templateType: string, pos: { x: number; y: number }, size?: { w: number; h: number }) => {
@@ -53,20 +55,19 @@ export default function Home() {
 
       // 'over' indicates where it was dropped. If it was dropped over the 'canvas-area', we process the drop
       if (event.over?.id === 'canvas-area' && activeTemplateType) {
-            
-          // Calculate the pointer position for the new block
-          // Note: dnd-kit does not provide drop coordinates relative to the destination
-          // in a simple way in this context, so we will use dummy coordinates (or
-          // it would be necessary to calculate it manually based on the event).
-          // For this example, we will use a central point:
-          const pos = { x: 400, y: 300 }; // Fixed position for simplicity
-
+      
+        
           const payload = active.data.current;
-          
-          const sizeData = {
-              w: payload?.w,
-              h: payload?.h
+
+          const objectWidth = payload?.w || 150;
+          const objectHeight = payload?.h || 100;
+
+          const pos = { 
+            x: (dimensions.width / 2) - (objectWidth / 2), 
+            y: (dimensions.height / 2) - (objectHeight / 2) 
           };
+          
+          const sizeData = { w: objectWidth, h: objectHeight };
 
           handleDropTemplate(activeTemplateType, pos, sizeData);
       }
@@ -83,6 +84,8 @@ export default function Home() {
                     {/* CanvasArea is now the drop zone */}
                     <CanvasArea 
                         blocks={blocks}
+                        dimensions={dimensions}
+                        containerRef={containerRef}
                     />
 
                 </div>
