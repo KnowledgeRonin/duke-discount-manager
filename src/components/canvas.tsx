@@ -4,6 +4,7 @@ import { Stage, Layer, Text, Transformer, Rect } from "react-konva";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { RefObject } from "react";
+import Konva from 'konva';
 
 interface Block {
     id: string;
@@ -112,6 +113,8 @@ function DraggableRectangle({ id, text, x, y, width, height, isSelected, onSelec
         trRef.current.getLayer().batchDraw();
     }
 
+    const { handleSnapBack } = useBlockBehavior(x, y);
+
     return (
         <>
             <Rect
@@ -125,6 +128,7 @@ function DraggableRectangle({ id, text, x, y, width, height, isSelected, onSelec
                 strokeWidth={1}
                 cornerRadius={6}
                 draggable
+                onDragEnd={handleSnapBack}
                 onClick={onSelect}
                 onTap={onSelect}
             />
@@ -174,3 +178,24 @@ export function useContainerDimensions(initialWidth: number, initialHeight: numb
 
     return { dimensions, containerRef, updateSize };
 }
+
+export const useBlockBehavior = (x: number, y: number) => {
+    
+    const handleSnapBack = useCallback((e: any) => {
+        const node = e.target;
+        
+        // Extra logic, such as analytics or sounds
+        {/*console.log("El bloque intentó moverse, regresando a casa...");*/}
+
+        node.to({
+            x: x,
+            y: y,
+            duration: 0.5,
+            easing: Konva.Easings.ElasticEaseOut,
+        });
+    }, [x, y]);
+
+    return {
+        handleSnapBack
+    };
+};
