@@ -54,22 +54,25 @@ export default function Home() {
           const { active, over } = event;
 
       // 'over' indicates where it was dropped. If it was dropped over the 'canvas-area', we process the drop
-      if (event.over?.id === 'canvas-area' && activeTemplateType) {
+      if (event.over?.id === 'canvas-area') {
       
-        
           const payload = active.data.current;
 
-          const objectWidth = payload?.w || 150;
-          const objectHeight = payload?.h || 100;
+          if (payload) {
+            const objectWidth = payload.w || 150;
+            const objectHeight = payload.h || 100;
 
-          const pos = { 
-            x: (dimensions.width / 2) - (objectWidth / 2), 
-            y: (dimensions.height / 2) - (objectHeight / 2) 
-          };
-          
-          const sizeData = { w: objectWidth, h: objectHeight };
+            const typeToCreate = payload.templateType; 
 
-          handleDropTemplate(activeTemplateType, pos, sizeData);
+            const pos = { 
+                x: (dimensions.width / 2) - (objectWidth / 2), 
+                y: (dimensions.height / 2) - (objectHeight / 2) 
+            };
+            
+            const sizeData = { w: objectWidth, h: objectHeight };
+
+            handleDropTemplate(typeToCreate, pos, sizeData);
+        }
       }
         
       // Reset the active template type

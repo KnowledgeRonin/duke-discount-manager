@@ -7,7 +7,6 @@ import { useContainerDimensions } from '@/components/canvas';
   const TEMPLATES = [
   { id: 'TEMPLATE_RECT', type: 'RECTANGLE', label: 'Standard Rectangle' },
   { id: 'TEMPLATE_SQUARE', type: 'SQUARE', label: 'Perfect square' },
-  { id: 'TEMPLATE_CIRCLE', type: 'CIRCLE', label: 'Circle (Test)' },
 ];
 
 export function Sidebar() {

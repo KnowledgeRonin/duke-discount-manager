@@ -100,22 +100,6 @@ function ElementWrapper({ block, isSelected, onSelect, stageDimensions }: any) {
             />
         );
     }
-    
-    if (block.type === 'CIRCLE') {
-         return (
-            <DraggableRectangle
-                id={block.id}
-                x={block.x}
-                y={block.y}
-                width={100} 
-                height={100}
-                isSelected={isSelected}
-                onSelect={onSelect}
-                stageDimensions={stageDimensions}
-                // cornerRadius={50} 
-            />
-        );
-    }
 
     return null;
 }
