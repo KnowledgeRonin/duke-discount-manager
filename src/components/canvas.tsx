@@ -68,6 +68,7 @@ export function CanvasArea({ blocks, dimensions, containerRef }: CanvasAreaProps
                             block={block}
                             isSelected={selectedId === block.id}
                             onSelect={() => setSelectedId(block.id)}
+                            stageDimensions={dimensions}
                         />
                     ))}
                 </Layer>
@@ -83,7 +84,7 @@ export function CanvasArea({ blocks, dimensions, containerRef }: CanvasAreaProps
   );
 }
 
-function ElementWrapper({ block, isSelected, onSelect }: any) {
+function ElementWrapper({ block, isSelected, onSelect, stageDimensions }: any) {
     if (block.type === 'RECTANGLE') {
         return (
             <DraggableRectangle
@@ -95,6 +96,7 @@ function ElementWrapper({ block, isSelected, onSelect }: any) {
                 height={block.height || 80}
                 isSelected={isSelected}
                 onSelect={onSelect}
+                stageDimensions={stageDimensions}
             />
         );
     }
@@ -103,7 +105,7 @@ function ElementWrapper({ block, isSelected, onSelect }: any) {
 }
 
 // Konva component for rectangle
-function DraggableRectangle({ id, text, x, y, width, height, isSelected, onSelect }: any) {
+function DraggableRectangle({ id, text, x, y, width, height, isSelected, onSelect, stageDimensions }: any) {
     const shapeRef = useRef<any>(null);
     const trRef = useRef<any>(null);
 
@@ -128,6 +130,12 @@ function DraggableRectangle({ id, text, x, y, width, height, isSelected, onSelec
                 strokeWidth={1}
                 cornerRadius={6}
                 draggable
+                dragBoundFunc={createBoundaryConstraints(
+                    stageDimensions.width,  // Canvas Width
+                    stageDimensions.height, // Canvas Height
+                    width,                  // Object Width
+                    height                  // Object Height
+                )}
                 onDragEnd={handleSnapBack}
                 onClick={onSelect}
                 onTap={onSelect}
@@ -198,4 +206,29 @@ export const useBlockBehavior = (x: number, y: number) => {
     return {
         handleSnapBack
     };
+};
+
+export const createBoundaryConstraints = (
+  stageWidth: number,
+  stageHeight: number,
+  objectWidth: number,
+  objectHeight: number
+) => {
+
+  return function (pos: { x: number; y: number }) {
+    // 1. Limit X axis
+    // The object cannot go further to the left than 0
+    // Nor further to the right than (CanvasWidth - ObjectWidth)
+    const newX = Math.max(0, Math.min(pos.x, stageWidth - objectWidth));
+
+    // 2. Limit Y axis
+    // The object cannot go higher than 0
+    // Nor lower than (HighCanvas - HighObject)
+    const newY = Math.max(0, Math.min(pos.y, stageHeight - objectHeight));
+
+    return {
+      x: newX,
+      y: newY,
+    };
+  };
 };
