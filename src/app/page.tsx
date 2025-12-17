@@ -40,7 +40,7 @@ export default function Home() {
       };
 
       // Update the state, which triggers a new rendering of CanvasArea
-      setBlocks((prevBlocks) => [...prevBlocks, newBlock]);
+      setBlocks([newBlock]);
   };
 
   // 1. DND-KIT: It runs when a drag starts
