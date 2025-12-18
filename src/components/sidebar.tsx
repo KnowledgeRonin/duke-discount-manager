@@ -62,7 +62,7 @@ function DraggableSidebarItem({ id, type, label }: SidebarItemProps) {
             style={style}
             {...listeners}
             {...attributes}
-            className="p-4 bg-white border border-gray-200 rounded-lg cursor-grab shadow-sm hover:shadow-md hover:border-blue-400 transition-all active:cursor-grabbing select-none"
+            className="p-4 bg-white border border-gray-200 rounded-lg cursor-grab shadow-sm hover:shadow-md hover:border-blue-400 active:cursor-grabbing select-none"
         >
             <div className="flex items-center gap-2">
                 {/* A small visual icon depending on the type */}
