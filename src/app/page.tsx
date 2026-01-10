@@ -5,7 +5,7 @@ import { Sidebar } from "@/components/sidebar";
 import { useState } from "react";
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
 
-interface Block {
+export interface Block {
     id: string;
     type: string;
     x: number;
@@ -13,6 +13,7 @@ interface Block {
     text: string;
     width?: number;
     height?: number;
+    fill: string; // Delete if it doesn't make sense later
 }
 
 export default function Home() {
@@ -23,7 +24,17 @@ export default function Home() {
   // Stores the type of template the user is dragging at any given time
   const [activeTemplateType, setActiveTemplateType] = useState<string | null>(null);
 
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
   const { dimensions, containerRef } = useContainerDimensions(800, 600);
+
+  const activeBlock = blocks.find(b => b.id === selectedId) || null;
+
+  const handleUpdateBlock = (id: string, newAttrs: Partial<Block>) => {
+    setBlocks(prev => prev.map(b => 
+      b.id === id ? { ...b, ...newAttrs } : b
+    ));
+  };
 
   // Function that executes when an element is dropped onto the CanvasArea
   const handleDropTemplate = (templateType: string, pos: { x: number; y: number }, size?: { w: number; h: number }) => {
@@ -37,10 +48,12 @@ export default function Home() {
           text: `Nuevo ${templateType}`,
           width: size?.w || 150, 
           height: size?.h || 100,
+          fill: '#F3F4F6' // Delete if it doesn't make sense later
       };
 
       // Update the state, which triggers a new rendering of CanvasArea
       setBlocks([newBlock]);
+      setSelectedId(newBlock.id);
   };
 
   // 1. DND-KIT: It runs when a drag starts
@@ -61,7 +74,6 @@ export default function Home() {
           if (payload) {
             const objectWidth = payload.w || 150;
             const objectHeight = payload.h || 100;
-
             const typeToCreate = payload.templateType; 
 
             const pos = { 
@@ -83,19 +95,27 @@ export default function Home() {
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
 
             <main className="flex h-screen w-screen overflow-hidden">
+
                 <div className="w-screen h-screen">
                     {/* CanvasArea is now the drop zone */}
                     <CanvasArea 
                         blocks={blocks}
                         dimensions={dimensions}
                         containerRef={containerRef}
+                        selectedId={selectedId}
+                        onSelect={(id) => setSelectedId(id)}
+                        onDeselect={() => setSelectedId(null)}
+                        onUpdateBlock={handleUpdateBlock} // To update position by dragging within the canvas
                     />
-
                 </div>
 
                 <aside className="w-80 h-screen border-l border-gray-200 bg-white" aria-label="Sidebar">
                     {/* Sidebar is now only the drag source */}
-                    <Sidebar />
+                    <Sidebar
+                        activeBlock={activeBlock}
+                        onUpdateBlock={handleUpdateBlock}
+                        onCloseEditor={() => setSelectedId(null)}
+                    />
                 </aside>
             </main>     
             

@@ -1,29 +1,99 @@
 "use client";
 
 import { useDraggable } from '@dnd-kit/core';
-import { useRef, useState, useEffect } from "react";
 import { useContainerDimensions } from '@/components/canvas';
+import { Block } from '@/app/page';
 
-  const TEMPLATES = [
-  { id: 'TEMPLATE_RECT', type: 'RECTANGLE', label: 'Standard Rectangle' },
+interface SidebarProps {
+  activeBlock: Block | null;
+  onUpdateBlock: (id: string, data: Partial<Block>) => void;
+  onCloseEditor: () => void;
+}
+
+export function Sidebar({ activeBlock, onUpdateBlock, onCloseEditor }: SidebarProps) {
+
+if (activeBlock) {
+    return (
+      <BlockEditor 
+        block={activeBlock} 
+        onChange={(data) => onUpdateBlock(activeBlock.id, data)}
+        onBack={onCloseEditor}
+      />
+    );
+  }
+
+  return <TemplateLibrary />;
+}
+
+const TEMPLATES = [
+  { id: 'TEMPLATE_RECT', type: 'RECTANGLE', label: 'Rectangle' },
   { id: 'TEMPLATE_SQUARE', type: 'SQUARE', label: 'Perfect square' },
 ];
 
-export function Sidebar() {
-
+function TemplateLibrary() {
   return (
-    <div className="w-64 p-4 border-r">
-        <h3 className="font-semibold mb-3 text-black">Templates</h3>
-            <div className="space-y-3">
-                {TEMPLATES.map((template) => (
-                <DraggableSidebarItem 
-                key={template.id}
-                id={template.id}
-                type={template.type}
-                label={template.label}
-                />
-                ))}
-            </div>
+    <div className="p-4 h-full flex flex-col">
+      <h3 className="font-bold text-lg mb-1 text-gray-800">Biblioteca</h3>
+      <p className="text-xs text-gray-400 mb-4">Drag elements onto the canvas</p>
+      <div className="space-y-3">
+          {TEMPLATES.map((template) => (
+            <DraggableSidebarItem 
+              key={template.id}
+              id={template.id}
+              type={template.type}
+              label={template.label}
+            />
+          ))}
+      </div>
+    </div>
+  );
+}
+
+interface BlockEditorProps {
+  block: Block;
+  onChange: (data: Partial<Block>) => void;
+  onBack: () => void;
+}
+
+function BlockEditor({ block, onChange, onBack }: BlockEditorProps) {
+  return (
+    <div className="flex flex-col h-full">
+      {/* Editor Header */}
+      <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+        <h3 className="font-bold text-gray-700">Edit {block.type}</h3>
+        <button onClick={onBack} className="text-xs text-blue-500 hover:underline">
+          Cerrar
+        </button>
+      </div>
+
+      {/* Form */}
+      <div className="p-4 space-y-4 overflow-y-auto">
+        
+        {/* Text Input */}
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Text</label>
+          <input 
+            type="text" 
+            value={block.text}
+            onChange={(e) => onChange({ text: e.target.value })}
+            className="w-full text-sm border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+        </div>
+
+        {/* Input Color */}
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Background Color</label>
+          <div className="flex gap-2">
+            <input 
+              type="color" 
+              value={block.fill}
+              onChange={(e) => onChange({ fill: e.target.value })}
+              className="h-8 w-8 cursor-pointer border-0 p-0 rounded overflow-hidden"
+            />
+            <span className="text-sm text-gray-600 self-center">{block.fill}</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
