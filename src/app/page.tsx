@@ -10,11 +10,29 @@ export interface Block {
     type: string;
     x: number;
     y: number;
-    text: string;
-    width?: number;
-    height?: number;
+    text?: string;
     fill: string; // Delete if it doesn't make sense later
+    pathData?: string;
+    scaleX?: number;
+    scaleY?: number;
 }
+
+export const SVG_LIBRARY = [
+  {
+    id: 'star_shape',
+    type: 'SVG',
+    label: 'Star',
+    path: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
+    viewBox: { w: 24, h: 24 }
+  },
+  {
+    id: 'heart_shape',
+    type: 'SVG',
+    label: 'Heart',
+    path: "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z",
+    viewBox: { w: 24, h: 24 }
+  }
+];
 
 export default function Home() {
 
@@ -45,9 +63,7 @@ export default function Home() {
           type: templateType,
           x: pos.x,
           y: pos.y,
-          text: `Nuevo ${templateType}`,
-          width: size?.w || 150, 
-          height: size?.h || 100,
+          text: `New ${templateType}`,
           fill: '#F3F4F6' // Delete if it doesn't make sense later
       };
 
@@ -72,18 +88,22 @@ export default function Home() {
           const payload = active.data.current;
 
           if (payload) {
-            const objectWidth = payload.w || 150;
-            const objectHeight = payload.h || 100;
-            const typeToCreate = payload.templateType; 
+            const initialScale = 4;
 
-            const pos = { 
-                x: (dimensions.width / 2) - (objectWidth / 2), 
-                y: (dimensions.height / 2) - (objectHeight / 2) 
+            const newBlock: Block = {
+                id: `svg-${Date.now()}`,
+                type: payload.templateType,
+                x: (dimensions.width / 2) - 50,
+                y: (dimensions.height / 2) - 50,
+                fill: '#3B82F6',
+                
+                pathData: payload.path, 
+                scaleX: initialScale,
+                scaleY: initialScale,
             };
-            
-            const sizeData = { w: objectWidth, h: objectHeight };
 
-            handleDropTemplate(typeToCreate, pos, sizeData);
+            setBlocks((prev) => [...prev, newBlock]);
+            setSelectedId(newBlock.id);
         }
       }
         

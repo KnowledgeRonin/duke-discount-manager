@@ -1,6 +1,6 @@
 "use client";
 
-import { Stage, Layer, Text, Transformer, Rect } from "react-konva";
+import { Stage, Layer, Text, Transformer, Rect, Path, Group } from "react-konva";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { RefObject } from "react";
@@ -9,10 +9,10 @@ import { Block } from "@/app/page";
 
 interface CanvasAreaProps {
     blocks: Block[];
-    selectedId: string | null;      // NEW: Viene del padre
-    onSelect: (id: string) => void; // NEW: Notifica selección
-    onDeselect: () => void;         // NEW: Notifica deselección
-    onUpdateBlock: (id: string, attrs: Partial<Block>) => void; // NEW: Actualiza coordenadas reales
+    selectedId: string | null;
+    onSelect: (id: string) => void;
+    onDeselect: () => void;
+    onUpdateBlock: (id: string, attrs: Partial<Block>) => void;
     dimensions: { width: number; height: number };
     containerRef: RefObject<HTMLDivElement | null>;
 }
@@ -66,7 +66,7 @@ export function CanvasArea({
                 
                 {blocks.length === 0 && (
                     <div className="absolute pointer-events-none text-gray-400 flex flex-col items-center">
-                        <span className="text-xl font-semibold">Canvas Vacío</span>
+                        <span className="text-xl font-semibold">Empty Canvas</span>
                         <span className="text-sm">Drag a template from the left</span>
                     </div>
                 )}
@@ -76,14 +76,13 @@ export function CanvasArea({
 }
 
 function ElementWrapper({ block, isSelected, onSelect, onUpdate, stageDimensions }: any) {
-    if (block.type === 'RECTANGLE' || block.type === 'SQUARE') {
+    if (block.type === 'RECTANGLE' || block.type === 'SQUARE' || block.type === 'SVG') {
         return (
-            <DraggableRectangle
+            <DraggablePath
                 {...block} // We pass all the block's props (x, y, fill, text, etc.)
                 isSelected={isSelected}
                 onSelect={onSelect}
                 onUpdate={onUpdate}
-                stageDimensions={stageDimensions}
             />
         );
     }
@@ -91,7 +90,76 @@ function ElementWrapper({ block, isSelected, onSelect, onUpdate, stageDimensions
 }
 
 // Konva component for rectangle
-function DraggableRectangle({ id, text, x, y, width, height, fill, isSelected, onSelect, onUpdate, stageDimensions }: any) {
+function DraggablePath({ 
+    id, x, y, pathData, fill, scaleX, scaleY, 
+    isSelected, onSelect, onUpdate 
+}: any) {
+    
+    const groupRef = useRef<Konva.Group>(null);
+    const trRef = useRef<Konva.Transformer>(null);
+
+    useEffect(() => {
+        if (isSelected && trRef.current && groupRef.current) {
+            trRef.current.nodes([groupRef.current]);
+            trRef.current.getLayer()?.batchDraw();
+        }
+    }, [isSelected]);
+
+    return (
+        <>
+            <Group
+                ref={groupRef}
+                x={x}
+                y={y}
+                scaleX={scaleX} // Usamos escala en lugar de width
+                scaleY={scaleY}
+                draggable
+                onClick={onSelect}
+                onTap={onSelect}
+                onDragEnd={(e) => {
+                    onUpdate(id, {
+                        x: e.target.x(),
+                        y: e.target.y(),
+                    });
+                }}
+                onTransformEnd={() => {
+                    const node = groupRef.current;
+                    if (node) {
+                        // Al terminar de redimensionar, guardamos la nueva escala
+                        onUpdate(id, {
+                            x: node.x(),
+                            y: node.y(),
+                            scaleX: node.scaleX(),
+                            scaleY: node.scaleY(),
+                        });
+                    }
+                }}
+            >
+                {/* El Path dibuja la forma vectorial */}
+                <Path
+                    data={pathData}
+                    fill={fill}
+                    // Centrar el SVG es un truco visual, 
+                    // a veces es necesario ajustar el offset si el SVG no viene centrado
+                    x={0} 
+                    y={0}
+                />
+            </Group>
+
+            {isSelected && (
+                <Transformer
+                    ref={trRef}
+                    // IMPORTANTE: Para vectores queremos que mantenga proporción por defecto?
+                    // false = permite deformar. true = fuerza proporción.
+                    keepRatio={false} 
+                    enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
+                />
+            )}
+        </>
+    );
+}
+
+{function DraggableRectangle({ id, text, x, y, width, height, fill, isSelected, onSelect, onUpdate, stageDimensions }: any) {
     const shapeRef = useRef<Konva.Rect>(null);
     const trRef = useRef<Konva.Transformer>(null);
 
@@ -174,7 +242,7 @@ function DraggableRectangle({ id, text, x, y, width, height, fill, isSelected, o
             )}
         </>
     );
-}
+}}
 
 export function useContainerDimensions(initialWidth: number, initialHeight: number) {
     
