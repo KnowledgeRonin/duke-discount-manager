@@ -1,9 +1,9 @@
 "use client";
 
 import { CanvasArea, useContainerDimensions } from "@/components/canvas";
-import { Sidebar } from "@/components/sidebar";
+import { Sidebar, SidebarItemView } from "@/components/sidebar";
 import { useState } from "react";
-import { DndContext, DragEndEvent } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragOverlay } from '@dnd-kit/core';
 
 export interface Block {
     id: string;
@@ -47,6 +47,10 @@ export default function Home() {
   const { dimensions, containerRef } = useContainerDimensions(800, 600);
 
   const activeBlock = blocks.find(b => b.id === selectedId) || null;
+
+  const activeSidebarItem = activeTemplateType 
+    ? SVG_LIBRARY.find(item => item.id === activeTemplateType) 
+    : null;
 
   const handleUpdateBlock = (id: string, newAttrs: Partial<Block>) => {
     setBlocks(prev => prev.map(b => 
@@ -137,7 +141,22 @@ export default function Home() {
                         onCloseEditor={() => setSelectedId(null)}
                     />
                 </aside>
-            </main>     
+            </main>
+            <DragOverlay dropAnimation={null}>
+            {activeSidebarItem ? (
+                <div className="w-32 opacity-90">
+                   <SidebarItemView 
+                      label={activeSidebarItem.label}
+                      extraData={{
+                          path: activeSidebarItem.path,
+                          viewBox: activeSidebarItem.viewBox
+                      }}
+                      // Estilos extra mientras "vuela"
+                      className="cursor-grabbing border-blue-500 bg-blue-50 shadow-2xl scale-105 rotate-2" 
+                   />
+               </div>
+            ) : null}
+        </DragOverlay>     
             
       </DndContext>
   );

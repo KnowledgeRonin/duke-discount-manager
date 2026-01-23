@@ -24,6 +24,7 @@ export function Sidebar({ activeBlock, onUpdateBlock, onCloseEditor }: SidebarPr
   return <TemplateLibrary />;
 }
 
+
 function TemplateLibrary() {
   return (
     <div className="p-4 h-full flex flex-col">
@@ -93,51 +94,59 @@ interface SidebarItemProps {
 function DraggableSidebarItem({ id, type, label, extraData }: SidebarItemProps) {
   // Each item measures its own size to transfer it to the canvas
   const { dimensions, containerRef } = useContainerDimensions(0, 0);
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: id,
     data: {
       templateType: type,
-      // If it's a SQUARE, force width and height to be equal, for example
-      w: type === 'SQUARE' ? 100 : dimensions.width,
-      h: type === 'SQUARE' ? 100 : dimensions.height,
       ...extraData
     }
   });
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    zIndex: 999, // It ensures that it is seen above all else when dragging
-  } : undefined;
+
+  const style = {
+    opacity: isDragging ? 0.4 : 1,
+  };
 
   const viewBoxString = extraData?.viewBox
       ? `0 0 ${extraData.viewBox.w} ${extraData.viewBox.h}`
       : "0 0 24 24";
 
   return (
+    <div ref={setNodeRef} {...listeners} {...attributes}>
+       <SidebarItemView 
+          label={label} 
+          extraData={extraData} 
+          style={style} 
+          className="cursor-grab hover:shadow-md hover:border-blue-400 active:cursor-grabbing"
+       />
+    </div>
+  );
+}
+
+export function SidebarItemView({ label, extraData, style, className }: any) {
+  const viewBoxString = extraData?.viewBox
+    ? `0 0 ${extraData.viewBox.w} ${extraData.viewBox.h}`
+    : "0 0 24 24";
+
+  return (
     <div
-      ref={(node) => {
-        setNodeRef(node);
-        containerRef.current = node;
-      }}
       style={style}
-      {...listeners}
-      {...attributes}
-      className="flex flex-col items-center justify-center p-2 bg-white border border-gray-200 rounded-lg cursor-grab shadow-sm hover:shadow-md hover:border-blue-400 active:cursor-grabbing select-none transition-all h-32"
+      className={`flex flex-col items-center justify-center p-2 bg-white border border-gray-200 rounded-lg shadow-sm h-32 ${className}`}
     >
       <div className="flex-1 w-full flex items-center justify-center p-2">
         {extraData?.path ? (
-           <svg 
-             viewBox={viewBoxString}
-             className="w-full h-full fill-gray-600"
-             preserveAspectRatio="xMidYMid meet"
-             xmlns="http://www.w3.org/2000/svg"
-           >
-             <path d={extraData.path} />
-           </svg>
+          <svg
+            viewBox={viewBoxString}
+            className="w-full h-full fill-gray-600"
+            preserveAspectRatio="xMidYMid meet"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d={extraData.path} />
+          </svg>
         ) : (
-
-           <div className="w-4 h-4 rounded-sm bg-blue-200" />
+          <div className="w-4 h-4 rounded-sm bg-blue-200" />
         )}
       </div>
+      <span className="text-xs text-gray-500 mt-2">{label}</span>
     </div>
   );
 }

@@ -158,7 +158,7 @@ function DraggablePath({
     );
 }
 
-{function DraggableRectangle({ id, text, x, y, width, height, fill, isSelected, onSelect, onUpdate, stageDimensions }: any) {
+function DraggableRectangle({ id, text, x, y, width, height, fill, isSelected, onSelect, onUpdate, stageDimensions }: any) {
     const shapeRef = useRef<Konva.Rect>(null);
     const trRef = useRef<Konva.Transformer>(null);
 
@@ -241,7 +241,7 @@ function DraggablePath({
             )}
         </>
     );
-}}
+}
 
 export function useContainerDimensions(initialWidth: number, initialHeight: number) {
     
