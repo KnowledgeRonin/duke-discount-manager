@@ -102,7 +102,7 @@ export default function Home() {
                 scaleY: initialScale,
             };
 
-            setBlocks((prev) => [...prev, newBlock]);
+            setBlocks([newBlock]);
             setSelectedId(newBlock.id);
         }
       }

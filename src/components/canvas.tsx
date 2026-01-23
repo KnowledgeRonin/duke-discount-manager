@@ -113,7 +113,6 @@ function DraggablePath({
                 y={y}
                 scaleX={scaleX} // Usamos escala en lugar de width
                 scaleY={scaleY}
-                draggable
                 onClick={onSelect}
                 onTap={onSelect}
                 onDragEnd={(e) => {
