@@ -1,21 +1,11 @@
 "use client";
 
-import { CanvasArea } from "@/components/canvas/canvas";
-import { Sidebar, SidebarItemView } from "@/components/sidebar/sidebar";
 import { useState } from "react";
-import { DndContext, DragEndEvent, DragOverlay } from '@dnd-kit/core';
-
-export interface Block {
-    id: string;
-    type: string;
-    x: number;
-    y: number;
-    text?: string;
-    fill: string; // Delete if it doesn't make sense later
-    pathData?: string;
-    scaleX?: number;
-    scaleY?: number;
-}
+import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { Sidebar } from "@/components/sidebar/sidebar";
+import { Block } from "@/app/types";
+import { Canvas } from "@/components/canvas/canvas";
+import { Card } from "@/components/ui/card";
 
 export const SVG_LIBRARY = [
   {
@@ -35,129 +25,89 @@ export const SVG_LIBRARY = [
 ];
 
 export default function Home() {
-
-  // Define the object data that will be managed and rendered within the CanvasArea
   const [blocks, setBlocks] = useState<Block[]>([]);
-
-  // Stores the type of template the user is dragging at any given time
-  const [activeTemplateType, setActiveTemplateType] = useState<string | null>(null);
-
+  const [activeId, setActiveId] = useState<string | null>(null); // ID of the dragged element in the Sidebar
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const { dimensions, containerRef } = useContainerDimensions(800, 600);
+  // Configuring sensors for improved drag-and-drop UX
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 }, // Avoid accidental dragging with a simple click.
+    })
+  );
+
+  const activeSidebarItem = activeId 
+    ? SVG_LIBRARY.find(item => item.id === activeId) 
+    : null;
 
   const activeBlock = blocks.find(b => b.id === selectedId) || null;
 
-  const activeSidebarItem = activeTemplateType 
-    ? SVG_LIBRARY.find(item => item.id === activeTemplateType) 
-    : null;
-
   const handleUpdateBlock = (id: string, newAttrs: Partial<Block>) => {
-    setBlocks(prev => prev.map(b => 
-      b.id === id ? { ...b, ...newAttrs } : b
-    ));
+    setBlocks(prev => prev.map(b => b.id === id ? { ...b, ...newAttrs } : b));
   };
 
-  // Function that executes when an element is dropped onto the CanvasArea
-  const handleDropTemplate = (templateType: string, pos: { x: number; y: number }, size?: { w: number; h: number }) => {
-        
-      // Create a block of text for this example
-      const newBlock: Block = {
-          id: `block-${Date.now()}`, // Unique ID based on timestamp
-          type: templateType,
-          x: pos.x,
-          y: pos.y,
-          text: `New ${templateType}`,
-          fill: '#F3F4F6' // Delete if it doesn't make sense later
-      };
-
-      // Update the state, which triggers a new rendering of CanvasArea
-      setBlocks([newBlock]);
-      setSelectedId(newBlock.id);
-  };
-
-  // 1. DND-KIT: It runs when a drag starts
   const handleDragStart = (event: any) => {
-      // Stores the type of template being dragged (e.g., "RECTANGLE")
-      setActiveTemplateType(event.active.id);
+    setActiveId(event.active.id);
   };
 
-  // 2. DND-KIT: It runs when the drag finishes
   const handleDragEnd = (event: DragEndEvent) => {
-          const { active, over } = event;
+    const { active, over } = event;
 
-      // 'over' indicates where it was dropped. If it was dropped over the 'canvas-area', we process the drop
-      if (event.over?.id === 'canvas-area') {
-      
-          const payload = active.data.current;
+    if (over && over.id === 'canvas-area') {
+      const payload = active.data.current;
 
-          if (payload) {
-            const initialScale = 4;
-
-            const newBlock: Block = {
-                id: `svg-${Date.now()}`,
-                type: payload.templateType,
-                x: (dimensions.width / 2) - 50,
-                y: (dimensions.height / 2) - 50,
-                fill: '#3B82F6',
-                
-                pathData: payload.path, 
-                scaleX: initialScale,
-                scaleY: initialScale,
-            };
-
-            setBlocks([newBlock]);
-            setSelectedId(newBlock.id);
-        }
-      }
+      if (payload) {
         
-      // Reset the active template type
-      setActiveTemplateType(null);
+        const newBlock: Block = {
+            id: `el-${Date.now()}`,
+            type: payload.templateType,
+            x: 200, 
+            y: 200,
+            rotation: 0,
+            scaleX: 3, 
+            scaleY: 3,
+            fill: '#3B82F6',
+            pathData: payload.path,
+        };
+
+        setBlocks((prev) => [...prev, newBlock]);
+        setSelectedId(newBlock.id);
+      }
+    }
+    setActiveId(null);
   };
 
   return (
-    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <main className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
+        
+        {/* Canvas Area (Drop Zone) */}
+        <div className="flex-1 h-full relative">
+            <Canvas 
+                blocks={blocks}
+                onSelect={setSelectedId}
+                onUpdateBlock={handleUpdateBlock}
+            />
+        </div>
 
-            <main className="flex h-screen w-screen overflow-hidden">
+        {/* Sidebar (Drag Source) */}
+        <Sidebar
+            activeBlock={activeBlock}
+            onUpdateBlock={handleUpdateBlock}
+            onCloseEditor={() => setSelectedId(null)}
+        />
+      </main>
 
-                <div className="w-screen h-screen">
-                    {/* CanvasArea is now the drop zone */}
-                    <CanvasArea 
-                        blocks={blocks}
-                        dimensions={dimensions}
-                        containerRef={containerRef}
-                        selectedId={selectedId}
-                        onSelect={(id) => setSelectedId(id)}
-                        onDeselect={() => setSelectedId(null)}
-                        onUpdateBlock={handleUpdateBlock} // To update position by dragging within the canvas
-                    />
-                </div>
-
-                <aside className="w-80 h-screen border-l border-gray-200 bg-white" aria-label="Sidebar">
-                    {/* Sidebar is now only the drag source */}
-                    <Sidebar
-                        activeBlock={activeBlock}
-                        onUpdateBlock={handleUpdateBlock}
-                        onCloseEditor={() => setSelectedId(null)}
-                    />
-                </aside>
-            </main>
-            <DragOverlay dropAnimation={null}>
-            {activeSidebarItem ? (
-                <div className="w-32 opacity-90">
-                   <SidebarItemView 
-                      label={activeSidebarItem.label}
-                      extraData={{
-                          path: activeSidebarItem.path,
-                          viewBox: activeSidebarItem.viewBox
-                      }}
-                      // Estilos extra mientras "vuela"
-                      className="cursor-grabbing border-blue-500 bg-blue-50 shadow-2xl scale-105 rotate-2" 
-                   />
-               </div>
-            ) : null}
-        </DragOverlay>     
-            
-      </DndContext>
+      {/* Overlay that follows the cursor */}
+      <DragOverlay dropAnimation={null}>
+        {activeSidebarItem ? (
+           <Card className="w-24 h-24 flex items-center justify-center bg-blue-50 border-blue-500 opacity-90 cursor-grabbing shadow-2xl rotate-3">
+              <svg viewBox={`0 0 ${activeSidebarItem.viewBox.w} ${activeSidebarItem.viewBox.h}`} className="w-10 h-10 fill-blue-500">
+                  <path d={activeSidebarItem.path} />
+              </svg>
+           </Card>
+        ) : null}
+      </DragOverlay>     
+    </DndContext>
   );
 }

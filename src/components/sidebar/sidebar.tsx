@@ -1,152 +1,156 @@
 "use client";
 
-import { useDraggable } from '@dnd-kit/core';
-import { useContainerDimensions } from '@/components/canvas/canvas';
-import { Block } from '@/app/page';
-import { SVG_LIBRARY } from '@/app/page';
+import { useDraggable } from "@dnd-kit/core";
+import { SVG_LIBRARY } from "@/app/page";
+import { Block } from "@/app/types";
+import { ScrollArea } from "@/components/ui/scroll-area"; 
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, GripVertical } from "lucide-react";
 
+// --- PROPS ---
 interface SidebarProps {
   activeBlock: Block | null;
   onUpdateBlock: (id: string, data: Partial<Block>) => void;
   onCloseEditor: () => void;
 }
 
+// --- MAIN SIDEBAR ---
 export function Sidebar({ activeBlock, onUpdateBlock, onCloseEditor }: SidebarProps) {
-  if (activeBlock) {
-    return (
-      <BlockEditor
-        block={activeBlock}
-        onChange={(data) => onUpdateBlock(activeBlock.id, data)}
-        onBack={onCloseEditor}
-      />
-    );
-  }
-  return <TemplateLibrary />;
+  return (
+    <div className="h-full border-l bg-background flex flex-col w-80 shadow-sm z-10">
+      {activeBlock ? (
+        <BlockEditor
+          block={activeBlock}
+          onChange={(data) => onUpdateBlock(activeBlock.id, data)}
+          onBack={onCloseEditor}
+        />
+      ) : (
+        <TemplateLibrary />
+      )}
+    </div>
+  );
 }
 
-
+// --- LIBRARY VIEW ---
 function TemplateLibrary() {
   return (
-    <div className="p-4 h-full flex flex-col">
-      <h3 className="font-bold text-lg mb-1 text-gray-800">Library</h3>
-      <p className="text-xs text-gray-400 mb-4">Drag elements onto the canvas</p>
-      <div className="grid grid-cols-2 gap-3 overflow-y-auto pb-10">
-        {SVG_LIBRARY.map((item) => (
-          <DraggableSidebarItem
-            key={item.id}
-            id={item.id}
-            type={item.type}
-            label={item.label}
-            extraData={{
-              path: item.path,
-              viewBox: item.viewBox
-            }}
-          />
-        ))}
+    <div className="flex flex-col h-full">
+      <div className="p-4 pb-2">
+        <h2 className="text-xl font-semibold tracking-tight">Biblioteca</h2>
+        <p className="text-sm text-muted-foreground">Arrastra elementos al lienzo</p>
       </div>
+      <Separator className="my-2" />
+      
+      <ScrollArea className="flex-1 px-4">
+        <div className="grid grid-cols-2 gap-3 pb-4">
+          {SVG_LIBRARY.map((item) => (
+            <DraggableSidebarItem
+              key={item.id}
+              item={item}
+            />
+          ))}
+        </div>
+      </ScrollArea>
     </div>
   );
 }
 
-interface BlockEditorProps {
-  block: Block;
-  onChange: (data: Partial<Block>) => void;
-  onBack: () => void;
-}
-
-function BlockEditor({ block, onChange, onBack }: BlockEditorProps) {
+// --- EDITOR VIEW ---
+function BlockEditor({ block, onChange, onBack }: { block: Block, onChange: any, onBack: any }) {
   return (
     <div className="flex flex-col h-full">
-      {/* Editor Header */}
-      <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-        <h3 className="font-bold text-gray-700">Edit {block.type}</h3>
-        <button onClick={onBack} className="text-xs text-blue-500 hover:underline">
-          Close
-        </button>
-      </div>
-      {/* Form */}
-      <div className="p-4 space-y-4 overflow-y-auto">
-        {/* Input Color */}
+      <div className="p-4 border-b flex items-center gap-2 bg-muted/30">
+        <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8">
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Background Color</label>
-          <div className="flex gap-2">
-            <input
-              type="color"
-              value={block.fill}
-              onChange={(e) => onChange({ fill: e.target.value })}
-              className="h-8 w-8 cursor-pointer border-0 p-0 rounded overflow-hidden"
-            />
-            <span className="text-sm text-gray-600 self-center">{block.fill}</span>
-          </div>
+          <h3 className="font-semibold text-sm">Editar {block.type}</h3>
+          <p className="text-xs text-muted-foreground text-ellipsis overflow-hidden w-40">
+            ID: {block.id}
+          </p>
         </div>
       </div>
+
+      <ScrollArea className="flex-1 p-4 space-y-6">
+        {/* Color Picker */}
+        <div className="space-y-2">
+          <Label htmlFor="color-picker">Color de Relleno</Label>
+          <div className="flex items-center gap-3">
+            <div className="relative overflow-hidden rounded-md border shadow-sm w-10 h-10">
+              <input
+                id="color-picker"
+                type="color"
+                value={block.fill}
+                onChange={(e) => onChange({ fill: e.target.value })}
+                className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-0 p-0"
+              />
+            </div>
+            <Input 
+                value={block.fill} 
+                onChange={(e) => onChange({ fill: e.target.value })}
+                className="font-mono uppercase w-28"
+            />
+          </div>
+        </div>
+        
+        {/* Manual position */}
+        <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label>Posición X</Label>
+                <Input 
+                    type="number" 
+                    value={Math.round(block.x)} 
+                    onChange={(e) => onChange({ x: Number(e.target.value) })}
+                />
+            </div>
+            <div className="space-y-2">
+                <Label>Posición Y</Label>
+                <Input 
+                    type="number" 
+                    value={Math.round(block.y)} 
+                    onChange={(e) => onChange({ y: Number(e.target.value) })}
+                />
+            </div>
+        </div>
+      </ScrollArea>
     </div>
   );
 }
 
-interface SidebarItemProps {
-  id: string;
-  type: string;
-  label: string;
-  extraData?: Record<string, any>;
-}
-
-function DraggableSidebarItem({ id, type, label, extraData }: SidebarItemProps) {
-  // Each item measures its own size to transfer it to the canvas
-  const { dimensions, containerRef } = useContainerDimensions(0, 0);
+// --- DRAGGABLE ITEM ---
+// Important: We extracted the props to simplify things.
+function DraggableSidebarItem({ item }: { item: any }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: id,
+    id: item.id,
     data: {
-      templateType: type,
-      ...extraData
+      templateType: item.type,
+      path: item.path,
+      viewBox: item.viewBox
     }
   });
 
-  const style = {
-    opacity: isDragging ? 0.4 : 1,
-  };
-
-  const viewBoxString = extraData?.viewBox
-      ? `0 0 ${extraData.viewBox.w} ${extraData.viewBox.h}`
-      : "0 0 24 24";
-
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes}>
-       <SidebarItemView 
-          label={label} 
-          extraData={extraData} 
-          style={style} 
-          className="cursor-grab hover:shadow-md hover:border-blue-400 active:cursor-grabbing"
-       />
-    </div>
-  );
-}
-
-export function SidebarItemView({ label, extraData, style, className }: any) {
-  const viewBoxString = extraData?.viewBox
-    ? `0 0 ${extraData.viewBox.w} ${extraData.viewBox.h}`
-    : "0 0 24 24";
-
-  return (
-    <div
-      style={style}
-      className={`flex flex-col items-center justify-center p-2 bg-white border border-gray-200 rounded-lg shadow-sm h-32 ${className}`}
-    >
-      <div className="flex-1 w-full flex items-center justify-center p-2">
-        {extraData?.path ? (
-          <svg
-            viewBox={viewBoxString}
-            className="w-full h-full fill-gray-600"
-            preserveAspectRatio="xMidYMid meet"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path d={extraData.path} />
-          </svg>
-        ) : (
-          <div className="w-4 h-4 rounded-sm bg-blue-200" />
-        )}
-      </div>
-      <span className="text-xs text-gray-500 mt-2">{label}</span>
+    <div ref={setNodeRef} {...listeners} {...attributes} className="touch-none">
+       <Card 
+        className={`cursor-grab active:cursor-grabbing hover:border-blue-400 transition-all ${
+            isDragging ? 'opacity-50 ring-2 ring-blue-400' : 'hover:shadow-md'
+        }`}
+       >
+         <CardContent className="p-3 flex flex-col items-center gap-2 h-28 justify-center">
+            {/* Simple rendering of the SVG for preview */}
+            <svg
+                viewBox={`0 0 ${item.viewBox.w} ${item.viewBox.h}`}
+                className="w-12 h-12 fill-foreground/80"
+            >
+                <path d={item.path} />
+            </svg>
+            <span className="text-xs font-medium text-muted-foreground">{item.label}</span>
+         </CardContent>
+       </Card>
     </div>
   );
 }
