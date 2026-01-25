@@ -1,7 +1,7 @@
 "use client";
 
-import { CanvasArea, useContainerDimensions } from "@/components/canvas";
-import { Sidebar, SidebarItemView } from "@/components/sidebar";
+import { CanvasArea } from "@/components/canvas/canvas";
+import { Sidebar, SidebarItemView } from "@/components/sidebar/sidebar";
 import { useState } from "react";
 import { DndContext, DragEndEvent, DragOverlay } from '@dnd-kit/core';
 

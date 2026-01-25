@@ -1,7 +1,7 @@
 "use client";
 
 import { useDraggable } from '@dnd-kit/core';
-import { useContainerDimensions } from '@/components/canvas';
+import { useContainerDimensions } from '@/components/canvas/canvas';
 import { Block } from '@/app/page';
 import { SVG_LIBRARY } from '@/app/page';
 
