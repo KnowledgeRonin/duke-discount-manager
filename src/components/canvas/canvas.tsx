@@ -9,9 +9,10 @@ interface FabricCanvasProps {
   blocks: Block[];
   onSelect: (id: string | null) => void;
   onUpdateBlock: (id: string, attrs: Partial<Block>) => void;
+  onDimensionsChange?: (dims: { width: number; height: number }) => void;
 }
 
-export function Canvas({ blocks, onSelect, onUpdateBlock }: FabricCanvasProps) {
+export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: FabricCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<fabric.Canvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -35,15 +36,38 @@ export function Canvas({ blocks, onSelect, onUpdateBlock }: FabricCanvasProps) {
 
     fabricRef.current = canvas;
 
+    if (onDimensionsChange) {
+        onDimensionsChange({ 
+            width: containerRef.current.clientWidth, 
+            height: containerRef.current.clientHeight 
+        });
+    }
+
     // -- Event Listeners --
 
     // Resize
     const handleResize = () => {
       if (containerRef.current) {
-        canvas.setDimensions({
-          width: containerRef.current.clientWidth,
-          height: containerRef.current.clientHeight,
+        const width = containerRef.current.clientWidth;
+        const height = containerRef.current.clientHeight;
+
+        canvas.setDimensions({ width, height });
+
+        if (onDimensionsChange) {
+            onDimensionsChange({ width, height });
+        }
+        
+        const center = canvas.getCenterPoint();
+        canvas.getObjects().forEach(obj => {
+            obj.setPositionByOrigin(center, 'center', 'center');
+            obj.setCoords();
+
+        if (obj.id) {
+               // @ts-ignore
+               onUpdateBlock(obj.id, { x: center.x, y: center.y });
+           }
         });
+            
         canvas.requestRenderAll();
       }
     };
@@ -133,7 +157,15 @@ export function Canvas({ blocks, onSelect, onUpdateBlock }: FabricCanvasProps) {
                 transparentCorners: false,
                 cornerSize: 10,
                 // Rendering optimizations
-                objectCaching: false, 
+                objectCaching: false,
+                
+                lockMovementX: true,
+                lockMovementY: true,
+                lockRotation: false,
+                hasControls: true,
+                hasBorders: true,
+                hoverCursor: 'default'
+
             });
             canvas.add(path);
         

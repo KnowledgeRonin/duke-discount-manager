@@ -40,8 +40,8 @@ function TemplateLibrary() {
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 pb-2">
-        <h2 className="text-xl font-semibold tracking-tight">Biblioteca</h2>
-        <p className="text-sm text-muted-foreground">Arrastra elementos al lienzo</p>
+        <h2 className="text-xl font-semibold tracking-tight">Library</h2>
+        <p className="text-sm text-muted-foreground">Drag elements to the canvas</p>
       </div>
       <Separator className="my-2" />
       
@@ -68,7 +68,7 @@ function BlockEditor({ block, onChange, onBack }: { block: Block, onChange: any,
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h3 className="font-semibold text-sm">Editar {block.type}</h3>
+          <h3 className="font-semibold text-sm">Edit {block.type}</h3>
           <p className="text-xs text-muted-foreground text-ellipsis overflow-hidden w-40">
             ID: {block.id}
           </p>
@@ -78,7 +78,7 @@ function BlockEditor({ block, onChange, onBack }: { block: Block, onChange: any,
       <ScrollArea className="flex-1 p-4 space-y-6">
         {/* Color Picker */}
         <div className="space-y-2">
-          <Label htmlFor="color-picker">Color de Relleno</Label>
+          <Label htmlFor="color-picker">Fill Color</Label>
           <div className="flex items-center gap-3">
             <div className="relative overflow-hidden rounded-md border shadow-sm w-10 h-10">
               <input
@@ -97,25 +97,6 @@ function BlockEditor({ block, onChange, onBack }: { block: Block, onChange: any,
           </div>
         </div>
         
-        {/* Manual position */}
-        <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-                <Label>Posición X</Label>
-                <Input 
-                    type="number" 
-                    value={Math.round(block.x)} 
-                    onChange={(e) => onChange({ x: Number(e.target.value) })}
-                />
-            </div>
-            <div className="space-y-2">
-                <Label>Posición Y</Label>
-                <Input 
-                    type="number" 
-                    value={Math.round(block.y)} 
-                    onChange={(e) => onChange({ y: Number(e.target.value) })}
-                />
-            </div>
-        </div>
       </ScrollArea>
     </div>
   );

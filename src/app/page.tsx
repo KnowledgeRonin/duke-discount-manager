@@ -28,6 +28,7 @@ export default function Home() {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null); // ID of the dragged element in the Sidebar
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [canvasDims, setCanvasDims] = useState({ width: 0, height: 0 }); // State to determine the size of the canvas
 
   // Configuring sensors for improved drag-and-drop UX
   const sensors = useSensors(
@@ -57,12 +58,16 @@ export default function Home() {
       const payload = active.data.current;
 
       if (payload) {
+
+        // Calculate center position for new block
+        const centerX = canvasDims.width > 0 ? canvasDims.width / 2 : 300;
+        const centerY = canvasDims.height > 0 ? canvasDims.height / 2 : 300;
         
         const newBlock: Block = {
             id: `el-${Date.now()}`,
             type: payload.templateType,
-            x: 200, 
-            y: 200,
+            x: centerX, 
+            y: centerY,
             rotation: 0,
             scaleX: 3, 
             scaleY: 3,
@@ -70,7 +75,7 @@ export default function Home() {
             pathData: payload.path,
         };
 
-        setBlocks((prev) => [...prev, newBlock]);
+        setBlocks([newBlock]);
         setSelectedId(newBlock.id);
       }
     }
@@ -87,6 +92,7 @@ export default function Home() {
                 blocks={blocks}
                 onSelect={setSelectedId}
                 onUpdateBlock={handleUpdateBlock}
+                onDimensionsChange={(dims) => setCanvasDims(dims)}
             />
         </div>
 
