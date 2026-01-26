@@ -46,7 +46,7 @@ function TemplateLibrary() {
       <Separator className="my-2" />
       
       <ScrollArea className="flex-1 px-4">
-        <div className="grid grid-cols-2 gap-3 pb-4">
+        <div className="grid gap-3 pb-4">
           {SVG_LIBRARY.map((item) => (
             <DraggableSidebarItem
               key={item.id}
