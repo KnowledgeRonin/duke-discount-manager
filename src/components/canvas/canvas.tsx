@@ -17,21 +17,20 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
   const fabricRef = useRef<fabric.Canvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Integration with dnd-kit
   const { setNodeRef, isOver } = useDroppable({
     id: "canvas-area",
   });
 
-  // 1. INITIALIZATION (Runs only once)
+  // 1. INITIALIZATION
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return;
 
     const canvas = new fabric.Canvas(canvasRef.current, {
       height: containerRef.current.clientHeight,
       width: containerRef.current.clientWidth,
-      backgroundColor: "#ffffff",
+      backgroundColor: "#F9FAFB",
       preserveObjectStacking: true,
-      selection: true, // Enable multiple selection
+      selection: true,
     });
 
     fabricRef.current = canvas;
@@ -45,7 +44,6 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
 
     // -- Event Listeners --
 
-    // Resize
     const handleResize = () => {
       if (containerRef.current) {
         const width = containerRef.current.clientWidth;
@@ -58,12 +56,14 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
         }
         
         const center = canvas.getCenterPoint();
-        canvas.getObjects().forEach(obj => {
+        
+        const objects = canvas.getObjects() as Array<fabric.FabricObject & { id: string }>;
+
+        objects.forEach(obj => {
             obj.setPositionByOrigin(center, 'center', 'center');
             obj.setCoords();
 
-        if (obj.id) {
-               // @ts-ignore
+            if (obj.id) {
                onUpdateBlock(obj.id, { x: center.x, y: center.y });
            }
         });
@@ -73,12 +73,12 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
     };
     window.addEventListener("resize", handleResize);
 
-    // Modification of objects (Drag/Rotate/Scale) -> React
+    // Modification
     canvas.on("object:modified", (e) => {
       const target = e.target;
       if (!target) return;
 
-      // @ts-ignore: Custom property 'id'
+      // @ts-ignore
       const id = target.id;
       if (id) {
         onUpdateBlock(id, {
@@ -91,7 +91,7 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
       }
     });
 
-    // Selection -> React
+    // Selection
     const handleSelection = (e: any) => {
         const selection = e.selected || [];
         if (selection.length > 0) {
@@ -107,29 +107,24 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
     canvas.on("selection:updated", handleSelection);
     canvas.on("selection:cleared", () => onSelect(null));
 
-    // Cleanup
     return () => {
       window.removeEventListener("resize", handleResize);
       canvas.dispose();
     };
   }, []);
 
-  // 2. INTELIGENT SYNCHRONIZATION (DIFFING)
+  // 2. INTELLIGENT SYNCHRONIZATION (DIFFING)
   useEffect(() => {
     if (!fabricRef.current) return;
     const canvas = fabricRef.current;
     
-    // We obtain the current objects from the canvas.
-    const existingObjects = canvas.getObjects();
+    const existingObjects = canvas.getObjects() as Array<fabric.FabricObject & { id: string }>;
     
-    // Quick map for searching by ID
-    // @ts-ignore: id custom
     const existingMap = new Map(existingObjects.map(obj => [obj.id, obj]));
     const blockIds = new Set(blocks.map(b => b.id));
 
-    // A. DELETE: Objects that are in Fabric but not in React
+    // A. DELETE
     existingObjects.forEach((obj) => {
-       // @ts-ignore
        if (!blockIds.has(obj.id)) {
            canvas.remove(obj);
        }
@@ -140,69 +135,59 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
         const existingObj = existingMap.get(block.id);
 
         if (!existingObj) {
-            // --- CREATE NEW ---
-            const path = new fabric.Path(block.pathData, {
-                // @ts-ignore: we inject the ID
-                id: block.id, 
-                left: block.x,
-                top: block.y,
-                fill: block.fill,
-                scaleX: block.scaleX || 1,
-                scaleY: block.scaleY || 1,
-                angle: block.rotation || 0,
-                originX: 'center',
-                originY: 'center',
-                cornerColor: '#3B82F6',
-                borderColor: '#3B82F6',
-                transparentCorners: false,
-                cornerSize: 10,
-                // Rendering optimizations
-                objectCaching: false,
-                
-                lockMovementX: true,
-                lockMovementY: true,
-                lockRotation: false,
-                hasControls: true,
-                hasBorders: true,
-                hoverCursor: 'default'
 
+            fabric.loadSVGFromString(block.svgContent).then((results) => {
+
+                const objects = results.objects;
+                const options = results.options;
+                
+                const svgGroup = new fabric.Group(objects, {
+                     ...options,
+                    // @ts-ignore
+                    id: block.id,
+                    left: block.x,
+                    top: block.y,
+                    scaleX: block.scaleX || 1,
+                    scaleY: block.scaleY || 1,
+                    angle: block.rotation || 0,
+                    originX: 'center',
+                    originY: 'center',
+                    
+                    cornerColor: '#3B82F6',
+                    borderColor: '#3B82F6',
+                    transparentCorners: false,
+                    cornerSize: 10,
+                    
+                    lockMovementX: true,
+                    lockMovementY: true,
+                    hasControls: true,
+                });
+
+                canvas.add(svgGroup);
+                canvas.requestRenderAll();
+            }).catch((err) => {
+                console.error("Error al cargar SVG en Fabric:", err);
             });
-            canvas.add(path);
         
         } else {
-            // --- UPDATE EXISTING ---
-            
-            // We check if this object is being actively manipulated by the user.
-            // If the user is dragging it, we should NOT overwrite its position from React.
-            // to avoid "glitches" or infinite loop conflicts.
+            // Lógica de actualización (se mantiene igual)
             const isActive = canvas.getActiveObjects().some(obj => obj === existingObj);
             
-            // If it is NOT active (or if you want to force color updates always):
             if (!isActive) {
-                // We only update if there are differences (Micro-optimization).
                 if (existingObj.left !== block.x) existingObj.set('left', block.x);
                 if (existingObj.top !== block.y) existingObj.set('top', block.y);
                 if (existingObj.angle !== block.rotation) existingObj.set('angle', block.rotation);
                 if (existingObj.scaleX !== block.scaleX) existingObj.set('scaleX', block.scaleX);
                 if (existingObj.scaleY !== block.scaleY) existingObj.set('scaleY', block.scaleY);
+                
+                existingObj.setCoords(); // Importante actualizar coordenadas
             }
-
-            // Visual properties (Color) are ALWAYS updated, even if it is selected.
-            if (existingObj.fill !== block.fill) {
-                existingObj.set('fill', block.fill);
-            }
-            
-            // Note: Changing the `pathData` of an existing object in Fabric is complex.
-            // If your app allows you to change the shape of an object in real time, that's even better.
-            // destroy and recreate the object in that specific case.
-            // We assume that `pathData` does not change for the same ID in this flow.
         }
     });
-
-    // Render changes
+    
     canvas.requestRenderAll();
 
-  }, [blocks]); // It is executed every time the React state changes.
+  }, [blocks]);
 
   return (
     <div

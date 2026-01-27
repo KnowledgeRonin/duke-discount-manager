@@ -2,7 +2,7 @@ export type BlockType = 'SVG';
 
 export interface Block {
   id: string;
-  type: string;
+  type: BlockType;
   x: number;
   y: number;
   rotation?: number;
@@ -10,5 +10,6 @@ export interface Block {
   scaleY?: number;
   text?: string;
   fill: string;
-  pathData: string; // Fabric necesita el path string
+  svgContent: string;
+  viewBox: { w: number; h: number };
 }

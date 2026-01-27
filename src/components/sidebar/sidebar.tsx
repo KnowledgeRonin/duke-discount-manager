@@ -43,6 +43,7 @@ function TemplateLibrary() {
         <h2 className="text-xl font-semibold tracking-tight">Library</h2>
         <p className="text-sm text-muted-foreground">Drag elements to the canvas</p>
       </div>
+
       <Separator className="my-2" />
       
       <ScrollArea className="flex-1 px-4">
@@ -96,7 +97,6 @@ function BlockEditor({ block, onChange, onBack }: { block: Block, onChange: any,
             />
           </div>
         </div>
-        
       </ScrollArea>
     </div>
   );
@@ -109,28 +109,22 @@ function DraggableSidebarItem({ item }: { item: any }) {
     id: item.id,
     data: {
       templateType: item.type,
-      path: item.path,
+      content: item.content,
       viewBox: item.viewBox
     }
   });
 
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes} className="touch-none">
-       <Card 
-        className={`cursor-grab active:cursor-grabbing hover:border-blue-400 transition-all ${
+<div ref={setNodeRef} {...listeners} {...attributes} className="touch-none w-full">
+       <Card
+        className={`cursor-grab active:cursor-grabbing hover:border-blue-400 transition-all overflow-hidden relative ${
             isDragging ? 'opacity-50 ring-2 ring-blue-400' : 'hover:shadow-md'
-        }`}
+        } aspect-[2/1]`} 
        >
-         <CardContent className="p-3 flex flex-col items-center gap-2 h-28 justify-center">
-            {/* Simple rendering of the SVG for preview */}
-            <svg
-                viewBox={`0 0 ${item.viewBox.w} ${item.viewBox.h}`}
-                className="w-12 h-12 fill-foreground/80"
-            >
-                <path d={item.path} />
-            </svg>
-            <span className="text-xs font-medium text-muted-foreground">{item.label}</span>
-         </CardContent>
+         <div
+            className="w-full h-full flex items-center justify-center p-0 [&>svg]:w-full [&>svg]:h-full"
+            dangerouslySetInnerHTML={{ __html: item.content }}
+         />
        </Card>
     </div>
   );
