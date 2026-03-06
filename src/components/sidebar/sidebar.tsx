@@ -2,7 +2,7 @@
 
 import { useDraggable } from "@dnd-kit/core";
 import { SVG_LIBRARY } from "@/app/page";
-import { Block } from "@/app/types";
+import { Block } from "@/utils/types";
 import { ScrollArea } from "@/components/ui/scroll-area"; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -122,7 +122,7 @@ function DraggableSidebarItem({ item }: { item: any }) {
         } aspect-[2/1]`} 
        >
          <div
-            className="w-full h-full flex items-center justify-center p-0 [&>svg]:w-full [&>svg]:h-full"
+            className="w-full h-full flex items-center justify-center p-0 [&>svg]:w-[110%] [&>svg]:h-[110%] [&>svg]:object-contain drop-shadow-sm"
             dangerouslySetInnerHTML={{ __html: item.content }}
          />
        </Card>

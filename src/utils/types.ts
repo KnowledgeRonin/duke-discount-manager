@@ -1,4 +1,4 @@
-export type BlockType = 'SVG';
+export type BlockType = 'SVG' | 'JSON';
 
 export interface Block {
   id: string;
@@ -10,6 +10,7 @@ export interface Block {
   scaleY?: number;
   text?: string;
   fill: string;
-  svgContent: string;
+  svgContent?: string;
   viewBox: { w: number; h: number };
+  jsonData?: Record<string, any>;
 }
