@@ -1,49 +1,32 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 interface UseKeyboardShortcutsProps {
-  onUndo: () => void;
-  onRedo: () => void;
-  /** Callback para limpiar la selección activa al deshacer/rehacer */
-  onClearSelection: () => void;
+  undo: () => void;
+  redo: () => void;
+  setSelectedId: (id: string | null) => void;
 }
 
-/**
- * Registra los atajos de teclado globales del editor.
- *
- * Atajos soportados:
- * - Ctrl+Z / Cmd+Z       → deshacer
- * - Ctrl+Shift+Z / Cmd+Shift+Z → rehacer
- *
- * El listener se ignora automáticamente cuando el foco está en un
- * campo de texto (input, textarea, select) para no interferir con
- * la edición normal de texto.
- */
-export function useKeyboardShortcuts({
-  onUndo,
-  onRedo,
-  onClearSelection,
-}: UseKeyboardShortcutsProps): void {
+export const useKeyboardShortcuts = ({ undo, redo, setSelectedId }: UseKeyboardShortcutsProps) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const tag = document.activeElement?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA' ||
+        document.activeElement?.tagName === 'SELECT'
+      ) return;
 
-      const isUndoRedo = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z';
-      if (!isUndoRedo) return;
-
-      e.preventDefault();
-
-      if (e.shiftKey) {
-        onRedo();
-      } else {
-        onUndo();
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+        setSelectedId(null);
       }
-
-      // Limpiamos la selección del panel lateral también
-      onClearSelection();
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onUndo, onRedo, onClearSelection]);
-}
+  }, [undo, redo, setSelectedId]);
+};
