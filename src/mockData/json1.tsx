@@ -1,4 +1,4 @@
-export const VOUCHER_JSON =
+export const VOUCHER_JSON_1 =
 
 {
   "subTargetCheck": false,

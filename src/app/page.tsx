@@ -6,7 +6,7 @@ import { Sidebar } from "@/components/sidebar/sidebar";
 import { Block } from "@/utils/types";
 import { Canvas } from "@/components/canvas/canvas";
 import { Card } from "@/components/ui/card";
-import { VOUCHER_JSON } from "@/utils/jsonTest"; 
+import { VOUCHER_JSON } from "@/mockData/json2"; 
 import { JsonGenerator } from "@/utils/JsonGenerator";
 import JsonExtractor from "@/utils/JsonExtractor";
 import { useHistory } from "@/utils/useHistory";
@@ -116,6 +116,7 @@ useKeyboardShortcuts({ undo, redo, setSelectedId });
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <JsonExtractor/>
       <main className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
 
         {/* Canvas Area (Drop Zone) */}
