@@ -1,7 +1,7 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
-import { SVG_LIBRARY } from "@/app/page";
+import { SVG_LIBRARY } from "@/utils/library";
 import { Block } from "@/utils/types";
 import { ScrollArea } from "@/components/ui/scroll-area"; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
