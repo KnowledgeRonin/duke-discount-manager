@@ -1,4 +1,4 @@
-export const VOUCHER_JSON_5 = 
+export const VOUCHER_JSON_5 =
 
 {
   "subTargetCheck": false,
@@ -12651,7 +12651,7 @@ export const VOUCHER_JSON_5 =
       "fontWeight": 800,
       "fontFamily": "Big Shoulders Display",
       "fontStyle": "normal",
-      "lineHeight": 0.9758364312267658,
+      "lineHeight": 0.84,
       "text": "75%\nOFF",
       "charSpacing": 0,
       "textAlign": "center",
@@ -12671,7 +12671,7 @@ export const VOUCHER_JSON_5 =
       "version": "7.1.0",
       "originX": "left",
       "originY": "top",
-      "left": 28.891,
+      "left": 8,
       "top": -24.5305,
       "width": 79.8379,
       "height": 48.0476,

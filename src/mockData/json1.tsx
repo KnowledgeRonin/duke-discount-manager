@@ -2251,7 +2251,7 @@ export const VOUCHER_JSON_1 =
       "fontWeight": 600,
       "fontFamily": "Poppins",
       "fontStyle": "normal",
-      "lineHeight": 1.481658692185008,
+      "lineHeight": 1.24,
       "text": "THIS VOUCHER VALID UNTIL :\n12 DEC 2024",
       "charSpacing": 0,
       "textAlign": "left",

@@ -76,30 +76,45 @@ const collapseTspans = (svgString: string): string => {
   const doc = parser.parseFromString(svgString, "image/svg+xml");
 
   doc.querySelectorAll("text").forEach((textEl) => {
-    const tspans = Array.from(textEl.querySelectorAll("tspan"));
-    if (tspans.length === 0) return;
+    const allTspans = Array.from(textEl.querySelectorAll("tspan"));
 
-    // Agrupar tspans por valor de Y (cada Y distinto = una línea)
+    // ✅ Solo tspans hoja (sin descendientes tspan)
+    const leafTspans = allTspans.filter(
+      (ts) => ts.querySelectorAll("tspan").length === 0
+    );
+
+    if (leafTspans.length === 0) return;
+
+    // Agrupar por Y efectivo (subir el árbol hasta encontrar el atributo y)
     const lines = new Map<number, Element[]>();
-    tspans.forEach((ts) => {
-      const y = parseFloat(ts.getAttribute("y") || "0");
-      if (!lines.has(y)) lines.set(y, []);
-      lines.get(y)!.push(ts);
+    leafTspans.forEach((ts) => {
+      let effectiveY = 0;
+      let node: Element | null = ts;
+      while (node && node !== textEl) {
+        const yAttr = node.getAttribute("y");
+        if (yAttr !== null) {
+          effectiveY = parseFloat(yAttr);
+          break;
+        }
+        node = node.parentElement;
+      }
+      if (!lines.has(effectiveY)) lines.set(effectiveY, []);
+      lines.get(effectiveY)!.push(ts);
     });
 
-    // Eliminar todos los tspans originales del elemento texto
-    tspans.forEach((ts) => ts.remove());
+    // Eliminar todos los tspans (los wrapper también) — los nodos de texto directo se conservan
+    allTspans.forEach((ts) => ts.remove());
 
-    // Reconstruir: un tspan limpio por línea
-    lines.forEach((group, y) => {
+    // Reconstruir: un tspan por línea
+    const sortedYs = Array.from(lines.keys()).sort((a, b) => a - b);
+    sortedYs.forEach((y) => {
+      const group = lines.get(y)!;
       const combinedText = group.map((ts) => ts.textContent || "").join("");
       const newTspan = doc.createElementNS("http://www.w3.org/2000/svg", "tspan");
 
-      // Tomamos el letter-spacing del primer tspan del grupo
       const firstLetterSpacing = group[0].getAttribute("letter-spacing");
       if (firstLetterSpacing) newTspan.setAttribute("letter-spacing", firstLetterSpacing);
 
-      // Solo asignamos x/y si es una línea secundaria (y != 0)
       if (y !== 0) {
         newTspan.setAttribute("x", group[0].getAttribute("x") || "0");
         newTspan.setAttribute("y", String(y));
@@ -233,6 +248,16 @@ export default function JsonExtractor() {
 
             const hasFill   = obj.fill   && obj.fill   !== "none" && obj.fill   !== "";
             const hasStroke = obj.stroke && obj.stroke !== "none" && obj.stroke !== "";
+
+            const widthPadding = 20;
+            const finalTextAlign = obj.detectedTextAlign || obj.textAlign || "left";
+
+            let adjustedLeft = p.x;
+            if (finalTextAlign === "center") {
+              adjustedLeft -= widthPadding / 2;
+            } else if (finalTextAlign === "right") {
+              adjustedLeft -= widthPadding;
+            }
 
             return new fabric.Textbox(obj.text, {
               left: p.x,
