@@ -138,7 +138,6 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
 
     canvas.on("selection:created", handleSelection);
     canvas.on("selection:updated", handleSelection);
-    canvas.on("selection:cleared", () => onSelectRef.current(null));
 
     return () => {
       window.removeEventListener("resize", handleResize);

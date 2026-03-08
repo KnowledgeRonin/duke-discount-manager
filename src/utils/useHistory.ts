@@ -1,13 +1,13 @@
 import { useState, useCallback, SetStateAction } from 'react';
 
-// Definimos la estructura exacta del tiempo
 interface HistoryState<T> {
   past: T[];
   present: T;
   future: T[];
 }
 
-export function useHistory<T>(initialState: T) {
+// Añadimos un parámetro opcional 'limit' (por defecto 50)
+export function useHistory<T>(initialState: T, limit = 50) {
   const [state, setState] = useState<HistoryState<T>>({
     past: [],
     present: initialState,
@@ -16,26 +16,29 @@ export function useHistory<T>(initialState: T) {
 
   const set = useCallback((action: SetStateAction<T>) => {
     setState((currentState) => {
-      // Resolvemos el estado nuevo igual que lo hace React internamente
       const nextPresent = typeof action === 'function' 
         ? (action as (prevState: T) => T)(currentState.present)
         : action;
 
-      // Si no hay cambios reales, no guardamos basura en el historial
       if (currentState.present === nextPresent) return currentState;
 
+      // Unimos el pasado con el presente actual, pero lo CORTAMOS según el límite
+      // Así evitamos fugas de memoria si el usuario trabaja por horas
+      const newPast = [...currentState.past, currentState.present].slice(-limit);
+
       return {
-        past: [...currentState.past, currentState.present], // Guardamos el presente en el pasado
-        present: nextPresent, // Establecemos el nuevo presente
-        future: [] // Si hacemos una nueva acción, borramos las líneas temporales futuras
+        past: newPast,
+        present: nextPresent,
+        future: [] 
       };
     });
-  }, []);
+  }, [limit]);
 
   const undo = useCallback(() => {
     setState((currentState) => {
-      // Si no hay pasado, no hacemos nada
-      if (currentState.past.length === 0) return currentState;
+      // Opcional: Si quieres que nunca vuelva al array vacío inicial ([]),
+      // podrías cambiar esto a: if (currentState.past.length <= 1) return currentState;
+      if (currentState.past.length <= 1) return currentState;
 
       const previous = currentState.past[currentState.past.length - 1];
       const newPast = currentState.past.slice(0, currentState.past.length - 1);
@@ -43,14 +46,13 @@ export function useHistory<T>(initialState: T) {
       return {
         past: newPast,
         present: previous,
-        future: [currentState.present, ...currentState.future] // Mandamos el presente actual al futuro
+        future: [currentState.present, ...currentState.future]
       };
     });
   }, []);
 
   const redo = useCallback(() => {
     setState((currentState) => {
-      // Si no hay futuro, no hacemos nada
       if (currentState.future.length === 0) return currentState;
 
       const next = currentState.future[0];
@@ -64,6 +66,5 @@ export function useHistory<T>(initialState: T) {
     });
   }, []);
 
-  // Exponemos las variables tal cual las espera tu componente principal
   return { state: state.present, setState: set, undo, redo };
 }
