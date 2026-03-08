@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { Block } from "@/utils/types";
@@ -86,7 +86,9 @@ const handleUpdateBlock = useCallback((id: string, newAttrs: Partial<Block>) => 
     setActiveId(null);
   };
 
-useKeyboardShortcuts({ undo, redo, setSelectedId });
+    const canvasContainerRef = useRef<HTMLDivElement>(null);
+
+    useKeyboardShortcuts({ undo, redo, setSelectedId, containerRef: canvasContainerRef });
 
 
   return (
@@ -95,7 +97,13 @@ useKeyboardShortcuts({ undo, redo, setSelectedId });
       <main className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
 
         {/* Canvas Area (Drop Zone) */}
-        <div className="flex-1 h-full relative">
+        <div
+          ref={canvasContainerRef}
+          className="flex-1 h-full relative"
+          tabIndex={-1}         // permite recibir foco programáticamente
+          style={{ outline: 'none' }}
+          onMouseDown={() => canvasContainerRef.current?.focus()} 
+        >
             <Canvas 
                 blocks={blocks}
                 onSelect={setSelectedId}

@@ -1,12 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, RefObject } from "react";
 
 interface UseKeyboardShortcutsProps {
   undo: () => void;
   redo: () => void;
   setSelectedId: (id: string | null) => void;
+  containerRef: RefObject<HTMLElement>;
 }
 
-export const useKeyboardShortcuts = ({ undo, redo, setSelectedId }: UseKeyboardShortcutsProps) => {
+export const useKeyboardShortcuts = ({ undo, redo, setSelectedId, containerRef }: UseKeyboardShortcutsProps) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -15,6 +16,8 @@ export const useKeyboardShortcuts = ({ undo, redo, setSelectedId }: UseKeyboardS
         document.activeElement?.tagName === 'SELECT'
       ) return;
 
+      if (!containerRef.current?.contains(document.activeElement)) return;
+
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
         e.preventDefault();
         if (e.shiftKey) {
@@ -22,7 +25,6 @@ export const useKeyboardShortcuts = ({ undo, redo, setSelectedId }: UseKeyboardS
         } else {
           undo();
         }
-        setSelectedId(null);
       }
     };
 
