@@ -20,7 +20,8 @@ export default function Home() {
     state: blocks, 
     setState: setBlocks, 
     undo, 
-    redo 
+    redo,
+    reset: resetBlocks
   } = useHistory<Block[]>([]);
 
   const [activeId, setActiveId] = useState<string | null>(null); 
@@ -78,7 +79,8 @@ const handleUpdateBlock = useCallback((id: string, newAttrs: Partial<Block>) => 
         // Al soltar un nuevo bloque, lo agregamos al historial
         // En lugar de reemplazar el array, lo sumamos (como lo tendrías en un editor real)
         // O si quieres que solo haya 1 bloque en pantalla a la vez, déjalo como () => [newBlock]
-        setBlocks(() => [newBlock]); 
+        setBlocks(() => [newBlock]);
+        resetBlocks([newBlock]);
         
         setSelectedId(newBlock.id);
       }

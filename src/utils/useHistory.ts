@@ -14,6 +14,14 @@ export function useHistory<T>(initialState: T, limit = 50) {
     future: []
   });
 
+  const reset = useCallback((newInitialState: T) => {
+    setState({
+      past: [],
+      present: newInitialState,
+      future: []
+    });
+  }, []);
+
   const set = useCallback((action: SetStateAction<T>) => {
     setState((currentState) => {
       const nextPresent = typeof action === 'function' 
@@ -66,5 +74,5 @@ export function useHistory<T>(initialState: T, limit = 50) {
     });
   }, []);
 
-  return { state: state.present, setState: set, undo, redo };
+  return { state: state.present, setState: set, undo, redo, reset };
 }
