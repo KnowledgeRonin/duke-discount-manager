@@ -1,6 +1,3 @@
-// src/utils/library.ts
-
-// Importas tus JSONs desde sus respectivos archivos
 import { VOUCHER_JSON_1 } from "@/mockData/json1";
 import { VOUCHER_JSON_2 } from "@/mockData/json2";
 import { VOUCHER_JSON_5 } from "@/mockData/json5";
@@ -14,7 +11,6 @@ export type LibraryItem = {
   id: string;
   type: 'SVG' | 'JSON';
   label: string;
-  content: string;
   canvasData?: any; // Luego puedes tipar esto mejor si todos los JSON comparten la misma interfaz
   viewBox: { w: number; h: number };
 };
@@ -25,7 +21,6 @@ export const SVG_LIBRARY: LibraryItem[] = [
     id: 'voucher_1',
     type: 'JSON',
     label: 'Voucher1',
-    content: THUMBNAIL_1,
     canvasData: VOUCHER_JSON_1,
     viewBox: { w: 197, h: 100 }
   },
@@ -33,7 +28,6 @@ export const SVG_LIBRARY: LibraryItem[] = [
     id: 'voucher_2',
     type: 'JSON',
     label: 'Voucher2',
-    content: THUMBNAIL_2,
     canvasData: VOUCHER_JSON_2,
     viewBox: { w: 197, h: 100 }
   },
@@ -41,7 +35,6 @@ export const SVG_LIBRARY: LibraryItem[] = [
     id: 'voucher_5',
     type: 'JSON',
     label: 'Voucher5',
-    content: THUMBNAIL_5,
     canvasData: VOUCHER_JSON_5,
     viewBox: { w: 197, h: 100 }
   }

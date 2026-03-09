@@ -58,6 +58,8 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
       canvas.setDimensions({ width, height });
       onDimensionsChangeRef.current?.({ width, height });
 
+      canvas.calcOffset();
+
       const center = canvas.getCenterPoint();
       const objects = canvas.getObjects() as Array<fabric.FabricObject & { id: string }>;
       objects.forEach((obj) => {
@@ -70,6 +72,86 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
       canvas.requestRenderAll();
     };
     window.addEventListener("resize", handleResize);
+
+    canvas.on("object:moving", (e) => {
+      const obj = e.target;
+      if (!obj) return;
+
+      // CRUCIAL: Esto sincroniza las coordenadas de Fabric con el HTML real
+      // Arregla el problema de los límites desplazados al hacer zoom o cambiar el layout
+      canvas.calcOffset();
+
+      const canvasWidth = canvas.width!;
+      const canvasHeight = canvas.height!;
+
+      // Usamos las dimensiones base multiplicadas por la escala.
+      // Esto es ESTABLE y no causa los bucles de teletransportación de getBoundingRect()
+      const objWidth = (obj.width || 0) * (obj.scaleX || 1);
+      const objHeight = (obj.height || 0) * (obj.scaleY || 1);
+
+      // Como tus objetos tienen originX/Y en "center", su punto de control es la mitad
+      const minX = objWidth / 2;
+      const maxX = canvasWidth - (objWidth / 2);
+      const minY = objHeight / 2;
+      const maxY = canvasHeight - (objHeight / 2);
+
+      // Aplicamos topes estrictos
+      if (objWidth <= canvasWidth) {
+        if (obj.left! < minX) obj.set("left", minX);
+        if (obj.left! > maxX) obj.set("left", maxX);
+      }
+
+      if (objHeight <= canvasHeight) {
+        if (obj.top! < minY) obj.set("top", minY);
+        if (obj.top! > maxY) obj.set("top", maxY);
+      }
+    });
+
+    // 2. Evitar que el objeto se escale fuera del canvas
+    canvas.on("object:scaling", (e) => {
+      const obj = e.target;
+      if (!obj) return;
+
+      canvas.calcOffset();
+
+      const canvasWidth = canvas.width!;
+      const canvasHeight = canvas.height!;
+
+      const rect = obj.getBoundingRect();
+
+      // 🔍 DEBUG: Ver en consola si getBoundingRect() se alinea con el canvas
+      console.log("📐 scaling getBoundingRect:", {
+        rectLeft: rect.left,
+        rectTop: rect.top,
+        rectRight: rect.left + rect.width,
+        rectBottom: rect.top + rect.height,
+        canvasWidth,
+        canvasHeight,
+      });
+
+      let clamped = false;
+
+      if (rect.left < 0) {
+        obj.set("left", obj.left! - rect.left);
+        clamped = true;
+      }
+      if (rect.top < 0) {
+        obj.set("top", obj.top! - rect.top);
+        clamped = true;
+      }
+      if (rect.left + rect.width > canvasWidth) {
+        obj.set("scaleX", obj.scaleX! * (canvasWidth - rect.left) / rect.width);
+        clamped = true;
+      }
+      if (rect.top + rect.height > canvasHeight) {
+        obj.set("scaleY", obj.scaleY! * (canvasHeight - rect.top) / rect.height);
+        clamped = true;
+      }
+
+      if (clamped) {
+        obj.setCoords();
+      }
+    });
 
     canvas.on("object:modified", (e) => {
       const target = e.target;
@@ -309,9 +391,8 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
         // @ts-ignore
         containerRef.current = node;
       }}
-      className={`relative w-full h-full overflow-hidden transition-colors ${
-        isOver ? "bg-blue-50/50" : "bg-slate-100"
-      }`}
+      className={`relative w-full h-full overflow-hidden transition-colors ${isOver ? "bg-blue-50/50" : "bg-slate-100"
+        }`}
     >
       <canvas ref={canvasRef} />
     </div>

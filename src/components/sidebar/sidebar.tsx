@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, GripVertical } from "lucide-react";
+import { FabricThumbnail } from "@/utils/fabricThumbnail"
 
 // --- PROPS ---
 interface SidebarProps {
@@ -110,22 +111,26 @@ function DraggableSidebarItem({ item }: { item: any }) {
     data: {
       templateType: item.type,
       content: item.content,
+      canvasData: item.canvasData,
       viewBox: item.viewBox
     }
   });
 
-  return (
-<div ref={setNodeRef} {...listeners} {...attributes} className="touch-none w-full">
+return (
+    <div ref={setNodeRef} {...listeners} {...attributes} className="touch-none w-full">
        <Card
         className={`cursor-grab active:cursor-grabbing hover:border-blue-400 transition-all overflow-hidden relative ${
             isDragging ? 'opacity-50 ring-2 ring-blue-400' : 'hover:shadow-md'
         } aspect-[2/1]`} 
        >
-         <div
-            className="w-full h-full flex items-center justify-center p-0 [&>svg]:w-[110%] [&>svg]:h-[110%] [&>svg]:object-contain drop-shadow-sm"
-            dangerouslySetInnerHTML={{ __html: item.content }}
-         />
+         <div className="w-full h-full flex items-center justify-center p-0">
+            {/* Renderizamos el Thumbnail a partir del JSON */}
+            {item.type === 'JSON' && item.canvasData ? (
+               <FabricThumbnail jsonData={item.canvasData} />
+            ) : (
+               <div dangerouslySetInnerHTML={{ __html: item.content }} />
+            )}
+         </div>
        </Card>
     </div>
-  );
-}
+  );}

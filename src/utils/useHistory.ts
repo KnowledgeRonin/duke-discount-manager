@@ -46,7 +46,7 @@ export function useHistory<T>(initialState: T, limit = 50) {
     setState((currentState) => {
       // Opcional: Si quieres que nunca vuelva al array vacío inicial ([]),
       // podrías cambiar esto a: if (currentState.past.length <= 1) return currentState;
-      if (currentState.past.length <= 1) return currentState;
+      if (currentState.past.length === 0) return currentState;
 
       const previous = currentState.past[currentState.past.length - 1];
       const newPast = currentState.past.slice(0, currentState.past.length - 1);
