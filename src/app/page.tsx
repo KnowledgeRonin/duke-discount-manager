@@ -89,8 +89,14 @@ const handleUpdateBlock = useCallback((id: string, newAttrs: Partial<Block>) => 
   };
 
     const canvasContainerRef = useRef<HTMLDivElement>(null);
+    const undoFiredRef = useRef(false);
 
-    useKeyboardShortcuts({ undo, redo, setSelectedId, containerRef: canvasContainerRef });
+    const wrappedUndo = useCallback(() => {
+      undoFiredRef.current = true;
+      undo();
+    }, [undo]);
+
+    useKeyboardShortcuts({ undo: wrappedUndo, redo, setSelectedId, containerRef: canvasContainerRef });
 
 
   return (
@@ -111,6 +117,7 @@ const handleUpdateBlock = useCallback((id: string, newAttrs: Partial<Block>) => 
                 onSelect={setSelectedId}
                 onUpdateBlock={handleUpdateBlock}
                 onDimensionsChange={(dims) => setCanvasDims(dims)}
+                undoFiredRef={undoFiredRef}
             />
         </div>
 

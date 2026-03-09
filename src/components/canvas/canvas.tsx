@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, type RefObject } from "react";
 import * as fabric from "fabric";
 import { useDroppable } from "@dnd-kit/core";
 import { Block } from "@/utils/types";
@@ -12,9 +12,10 @@ interface FabricCanvasProps {
   onSelect: (id: string | null) => void;
   onUpdateBlock: (id: string, attrs: Partial<Block>) => void;
   onDimensionsChange?: (dims: { width: number; height: number }) => void;
+  undoFiredRef?: RefObject<boolean>;
 }
 
-export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: FabricCanvasProps) {
+export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange, undoFiredRef }: FabricCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<fabric.Canvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -229,6 +230,13 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
     if (!fabricRef.current) return;
     const canvas = fabricRef.current;
 
+    // Si el cambio fue por undo, ocultar selector y resetear flag
+    if (undoFiredRef?.current) {
+      canvas.discardActiveObject();
+      // @ts-ignore
+      undoFiredRef.current = false;
+    }
+
     const existingObjects = canvas.getObjects() as Array<fabric.FabricObject & { id: string }>;
     const existingMap = new Map(existingObjects.map((obj) => [obj.id, obj]));
     const blockIds = new Set(blocks.map((b) => b.id));
@@ -366,9 +374,11 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
         if (existingObj.angle !== block.rotation) { existingObj.set("angle", block.rotation); didChange = true; }
         if (existingObj.scaleX !== block.scaleX) { existingObj.set("scaleX", block.scaleX); didChange = true; }
         if (existingObj.scaleY !== block.scaleY) { existingObj.set("scaleY", block.scaleY); didChange = true; }
+
         if (didChange) {
           existingObj.setCoords();
           const activeObject = canvas.getActiveObject();
+
           // @ts-ignore
           if (activeObject && activeObject.id === block.id) {
             canvas.discardActiveObject();
