@@ -77,33 +77,41 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
       const obj = e.target;
       if (!obj) return;
 
-      // CRUCIAL: Esto sincroniza las coordenadas de Fabric con el HTML real
-      // Arregla el problema de los límites desplazados al hacer zoom o cambiar el layout
-      canvas.calcOffset();
-
       const canvasWidth = canvas.width!;
       const canvasHeight = canvas.height!;
 
-      // Usamos las dimensiones base multiplicadas por la escala.
-      // Esto es ESTABLE y no causa los bucles de teletransportación de getBoundingRect()
-      const objWidth = (obj.width || 0) * (obj.scaleX || 1);
-      const objHeight = (obj.height || 0) * (obj.scaleY || 1);
+      // IMPORTANTE: setCoords() ANTES de getBoundingRect() para que
+      // devuelva la posición ACTUAL del drag, no la anterior.
+      obj.setCoords();
+      const rect = obj.getBoundingRect();
 
-      // Como tus objetos tienen originX/Y en "center", su punto de control es la mitad
-      const minX = objWidth / 2;
-      const maxX = canvasWidth - (objWidth / 2);
-      const minY = objHeight / 2;
-      const maxY = canvasHeight - (objHeight / 2);
+      let dx = 0;
+      let dy = 0;
 
-      // Aplicamos topes estrictos
-      if (objWidth <= canvasWidth) {
-        if (obj.left! < minX) obj.set("left", minX);
-        if (obj.left! > maxX) obj.set("left", maxX);
+      if (rect.left < 0) {
+        dx = -rect.left;
+      } else if (rect.left + rect.width > canvasWidth) {
+        dx = canvasWidth - (rect.left + rect.width);
       }
 
-      if (objHeight <= canvasHeight) {
-        if (obj.top! < minY) obj.set("top", minY);
-        if (obj.top! > maxY) obj.set("top", maxY);
+      if (rect.top < 0) {
+        dy = -rect.top;
+      } else if (rect.top + rect.height > canvasHeight) {
+        dy = canvasHeight - (rect.top + rect.height);
+      }
+
+      if (dx !== 0 || dy !== 0) {
+        const group = (obj as any).group;
+        if (group) {
+          obj.left = obj.left! + dx / (group.scaleX || 1);
+          obj.top = obj.top! + dy / (group.scaleY || 1);
+        } else {
+          obj.left = obj.left! + dx;
+          obj.top = obj.top! + dy;
+        }
+        // Actualizar coords DESPUÉS de la corrección para que
+        // Fabric dibuje el objeto en la posición corregida
+        obj.setCoords();
       }
     });
 
@@ -112,22 +120,10 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
       const obj = e.target;
       if (!obj) return;
 
-      canvas.calcOffset();
-
       const canvasWidth = canvas.width!;
       const canvasHeight = canvas.height!;
 
       const rect = obj.getBoundingRect();
-
-      // 🔍 DEBUG: Ver en consola si getBoundingRect() se alinea con el canvas
-      console.log("📐 scaling getBoundingRect:", {
-        rectLeft: rect.left,
-        rectTop: rect.top,
-        rectRight: rect.left + rect.width,
-        rectBottom: rect.top + rect.height,
-        canvasWidth,
-        canvasHeight,
-      });
 
       let clamped = false;
 
@@ -140,6 +136,7 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange }: 
         clamped = true;
       }
       if (rect.left + rect.width > canvasWidth) {
+        // Revertir al scaleX/Y previo si se desborda al escalar
         obj.set("scaleX", obj.scaleX! * (canvasWidth - rect.left) / rect.width);
         clamped = true;
       }
