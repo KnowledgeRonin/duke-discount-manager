@@ -13,6 +13,7 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 
 import { SVG_LIBRARY } from "@/utils/library";
+import { FabricThumbnail } from "@/utils/fabricThumbnail";
 
 export default function Home() {
   // 👇 CAMBIO 1: Reemplazamos useState por useHistory
@@ -133,10 +134,16 @@ const handleUpdateBlock = useCallback((id: string, newAttrs: Partial<Block>) => 
       <DragOverlay dropAnimation={null}>
         {activeSidebarItem ? (
            <Card className="w-24 h-24 flex items-center justify-center bg-blue-50 border-blue-500 opacity-90 cursor-grabbing shadow-2xl rotate-3 p-2 overflow-hidden">
-             <div 
-               className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"
-               dangerouslySetInnerHTML={{ __html: activeSidebarItem.content }} 
-             />
+             <div className="w-full h-full flex items-center justify-center">
+               {activeSidebarItem.type === 'JSON' && activeSidebarItem.canvasData ? (
+                 <FabricThumbnail jsonData={activeSidebarItem.canvasData} />
+               ) : (
+                 <div 
+                   className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
+                   dangerouslySetInnerHTML={{ __html: activeSidebarItem.content || '' }} 
+                 />
+               )}
+             </div>
            </Card>
         ) : null}
       </DragOverlay> 

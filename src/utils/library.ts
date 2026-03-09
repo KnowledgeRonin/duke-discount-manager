@@ -11,7 +11,8 @@ export type LibraryItem = {
   id: string;
   type: 'SVG' | 'JSON';
   label: string;
-  canvasData?: any; // Luego puedes tipar esto mejor si todos los JSON comparten la misma interfaz
+  content?: string; // Raw SVG/HTML string for SVG-type items
+  canvasData?: any; // Fabric.js JSON data for JSON-type items
   viewBox: { w: number; h: number };
 };
 
