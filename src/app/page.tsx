@@ -5,7 +5,6 @@ import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSe
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { Block } from "@/utils/types";
 import { Canvas } from "@/components/canvas/canvas";
-import { Card } from "@/components/ui/card";
 import { VOUCHER_JSON_2 } from "@/mockData/json2";
 import JsonExtractor from "@/utils/JsonExtractor";
 import { useHistory } from "@/utils/useHistory";
@@ -133,18 +132,16 @@ export default function Home() {
       {/* Overlay */}
       <DragOverlay dropAnimation={null}>
         {activeSidebarItem ? (
-          <Card className="w-24 h-24 flex items-center justify-center bg-blue-50 border-blue-500 opacity-90 cursor-grabbing shadow-2xl rotate-3 p-2 overflow-hidden">
-            <div className="w-full h-full flex items-center justify-center">
-              {activeSidebarItem.type === 'JSON' && activeSidebarItem.canvasData ? (
-                <FabricThumbnail jsonData={activeSidebarItem.canvasData} />
-              ) : (
-                <div
-                  className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
-                  dangerouslySetInnerHTML={{ __html: activeSidebarItem.content || '' }}
-                />
-              )}
-            </div>
-          </Card>
+          <div className="w-24 h-24 opacity-90 cursor-grabbing rotate-3 drop-shadow-2xl">
+            {activeSidebarItem.type === 'JSON' && activeSidebarItem.canvasData ? (
+              <FabricThumbnail jsonData={activeSidebarItem.canvasData} />
+            ) : (
+              <div
+                className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
+                dangerouslySetInnerHTML={{ __html: activeSidebarItem.content || '' }}
+              />
+            )}
+          </div>
         ) : null}
       </DragOverlay>
     </DndContext>
