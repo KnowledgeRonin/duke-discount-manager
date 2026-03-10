@@ -13,7 +13,7 @@ export async function loadGoogleFonts(fonts: string[]) {
   // 2. Construimos la URL de Google Fonts
   // Formato: family=Font1:wght@400;700&family=Font2&display=swap
   const fontQuery = fontsToLoad
-    .map(font => `family=${font.replace(/ /g, '+')}:wght@400;700`) // Pedimos pesos estándar
+    .map(font => `family=${font.replace(/ /g, '+')}:wght@100..900`) // Pedimos todos los pesos
     .join('&');
 
   const url = `https://fonts.googleapis.com/css2?${fontQuery}&display=swap`;

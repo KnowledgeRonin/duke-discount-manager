@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import * as fabric from "fabric"; 
 import { Skeleton } from "@/components/ui/skeleton";
+import { extractFontsFromFabricJSON } from "@/utils/fontUtils";
+import { loadGoogleFonts } from "@/utils/fontLoader";
 
 interface FabricThumbnailProps {
   jsonData: any;
@@ -50,25 +52,38 @@ export function FabricThumbnail({ jsonData }: FabricThumbnailProps) {
       offscreenCanvas.dispose();
     };
 
-    // --- DETECCIÓN INTELIGENTE DE FORMATO ---
-    const isFabricObject = jsonData && typeof jsonData.type === 'string' && jsonData.type !== 'canvas';
-    const isArray = Array.isArray(jsonData);
+    // --- CARGAR FUENTES ANTES DE RENDERIZAR ---
+    const fonts = extractFontsFromFabricJSON(jsonData);
 
-    if (isArray || isFabricObject) {
-      const objectsToLoad = isArray ? jsonData : [jsonData];
-      
-      const enlivenResult = fabric.util.enlivenObjects(objectsToLoad, (enlivenedObjects: any[]) => {
-        renderAndExport(enlivenedObjects);
-      });
-
-      if (enlivenResult && typeof enlivenResult.then === 'function') {
-        enlivenResult.then((enlivenedObjects: any[]) => renderAndExport(enlivenedObjects));
+    const doRender = async () => {
+      if (fonts.length > 0) {
+        await loadGoogleFonts(fonts);
+        await document.fonts.ready;
       }
-    } else {
-      offscreenCanvas.loadFromJSON(jsonData, () => {
-        renderAndExport(offscreenCanvas.getObjects());
-      });
-    }
+      if (isCancelled) return;
+
+      // --- DETECCIÓN INTELIGENTE DE FORMATO ---
+      const isFabricObject = jsonData && typeof jsonData.type === 'string' && jsonData.type !== 'canvas';
+      const isArray = Array.isArray(jsonData);
+
+      if (isArray || isFabricObject) {
+        const objectsToLoad = isArray ? jsonData : [jsonData];
+        
+        const enlivenResult = fabric.util.enlivenObjects(objectsToLoad, (enlivenedObjects: any[]) => {
+          renderAndExport(enlivenedObjects);
+        });
+
+        if (enlivenResult && typeof enlivenResult.then === 'function') {
+          enlivenResult.then((enlivenedObjects: any[]) => renderAndExport(enlivenedObjects));
+        }
+      } else {
+        offscreenCanvas.loadFromJSON(jsonData, () => {
+          renderAndExport(offscreenCanvas.getObjects());
+        });
+      }
+    };
+
+    doRender();
 
     // Cleanup function: cancela la actualización de estado si el componente se desmonta
     return () => {

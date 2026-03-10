@@ -274,7 +274,8 @@ export function Canvas({ blocks, onSelect, onUpdateBlock, onDimensionsChange, un
           loadingIdsRef.current.add(block.id);
           const detectedFonts = extractFontsFromFabricJSON(block.jsonData);
 
-          loadGoogleFonts(detectedFonts).then(() => {
+          loadGoogleFonts(detectedFonts).then(async () => {
+            await document.fonts.ready;
             fabric.util.enlivenObjects([block.jsonData!]).then((results) => {
               loadingIdsRef.current.delete(block.id);
               if (!blocksRef.current.some((b) => b.id === block.id)) return;
