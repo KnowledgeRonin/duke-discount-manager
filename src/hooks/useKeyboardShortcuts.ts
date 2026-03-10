@@ -24,7 +24,6 @@ export const useKeyboardShortcuts = ({ undo, redo, setSelectedId, containerRef }
           redo();
         } else {
           undo();
-          setSelectedId(null); // Deselect on undo
         }
       }
     };
