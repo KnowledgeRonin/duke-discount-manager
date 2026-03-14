@@ -2,7 +2,8 @@
 
 import { useDraggable } from "@dnd-kit/core";
 import { SVG_LIBRARY } from "@/utils/library";
-import { Block } from "@/utils/types";
+// We don't import Block here anymore, we'll use a loose type for now
+// import { Block } from "@/utils/types";
 import { ScrollArea } from "@/components/ui/scroll-area"; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,8 +15,9 @@ import { FabricThumbnail } from "@/utils/fabricThumbnail"
 
 // --- PROPS ---
 interface SidebarProps {
-  activeBlock: Block | null;
-  onUpdateBlock: (id: string, data: Partial<Block>) => void;
+  // We use any for now as the app transitions from Block to SceneNode
+  activeBlock: any | null;
+  onUpdateBlock: (id: string, data: any) => void;
   onCloseEditor: () => void;
 }
 
@@ -26,7 +28,7 @@ export function Sidebar({ activeBlock, onUpdateBlock, onCloseEditor }: SidebarPr
       {activeBlock ? (
         <BlockEditor
           block={activeBlock}
-          onChange={(data) => onUpdateBlock(activeBlock.id, data)}
+          onChange={(data: any) => onUpdateBlock(activeBlock.id, data)}
           onBack={onCloseEditor}
         />
       ) : (
@@ -62,7 +64,14 @@ function TemplateLibrary() {
 }
 
 // --- EDITOR VIEW ---
-function BlockEditor({ block, onChange, onBack }: { block: Block, onChange: any, onBack: any }) {
+function BlockEditor({ block, onChange, onBack }: { block: any, onChange: any, onBack: any }) {
+
+  // Safety check: The new architecture allows gradients which are objects.
+  // The HTML color picker needs a hex string.
+  const fillColorString = typeof block.fill === 'string' 
+      ? block.fill 
+      : (block.fill?.colorStops?.[0]?.color || '#000000');
+
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b flex items-center gap-2 bg-muted/30">
@@ -86,13 +95,13 @@ function BlockEditor({ block, onChange, onBack }: { block: Block, onChange: any,
               <input
                 id="color-picker"
                 type="color"
-                value={block.fill}
+                value={fillColorString}
                 onChange={(e) => onChange({ fill: e.target.value })}
                 className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-0 p-0"
               />
             </div>
             <Input 
-                value={block.fill} 
+                value={fillColorString} 
                 onChange={(e) => onChange({ fill: e.target.value })}
                 className="font-mono uppercase w-28"
             />

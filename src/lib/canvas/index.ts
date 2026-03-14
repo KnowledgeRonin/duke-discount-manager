@@ -8,6 +8,7 @@ export type {
   TextNode,
   RectNode,
   CircleNode,
+  LineNode,
   PolygonNode,
   PathNode,
   BaseNode,
@@ -26,6 +27,7 @@ export {
   TextNodeSchema,
   RectNodeSchema,
   CircleNodeSchema,
+  LineNodeSchema,
   PolygonNodeSchema,
   PathNodeSchema,
   BaseNodeSchema,
@@ -56,3 +58,10 @@ export type { CanvasStore } from './store'
 // Renderer
 export { CanvasRenderer } from './CanvasRenderer'
 export { useCanvasRenderer } from './useCanvasRenderer'
+
+// SVG Parser
+export {
+  getFontConfig,
+  collapseTspans,
+  parseSVGToGroupNode,
+} from './svgParser'

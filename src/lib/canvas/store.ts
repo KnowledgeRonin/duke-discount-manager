@@ -16,6 +16,7 @@ import {
   validateTree,
   SceneNodeSchema,
 } from './types'
+import { loadFromFabricJSON } from './parser'
 
 // ─────────────────────────────────────────────
 // Internal Helpers
@@ -151,6 +152,17 @@ interface CanvasActions {
    */
   deleteNode: (nodeId: string) => void
 
+  /**
+   * Adds a new node to the root group.
+   * Throws InvalidOperationError if root is not initialized.
+   */
+  addNode: (node: SceneNode) => void
+
+  /**
+   * Clears the entire canvas (removes all children from root).
+   */
+  clear: () => void
+
   // ── Selection ───────────────────────────────
 
   selectNode: (nodeId: string) => void
@@ -190,10 +202,10 @@ interface CanvasActions {
   // ── Initialization ──────────────────────────
 
   /**
-   * Loads and validates an external Fabric.js JSON tree into the store.
+   * Parses raw Fabric.js JSON, sanitizes it, and loads it into the store.
    * Resets history and rebuilds the node index.
    */
-  loadFromJSON: (json: unknown) => void
+  loadScene: (json: unknown) => void
 }
 
 export type CanvasStore = CanvasState & CanvasActions
@@ -369,6 +381,63 @@ export const useCanvasStore = create<CanvasStore>()(
                 (id) => id !== nodeId
               )
             })
+          }
+        },
+
+        addNode: (node: SceneNode) => {
+          const state = get()
+          if (!state.root) {
+            throw new InvalidOperationError('Scene Graph is not initialized')
+          }
+
+          // Validate node before adding
+          const parseResult = SceneNodeSchema.safeParse(node)
+          if (!parseResult.success) {
+            throw parseResult.error
+          }
+
+          set((draft) => {
+            // Snapshot for undo
+            draft.history.past.push(
+              JSON.parse(JSON.stringify(draft.root)) as GroupNode
+            )
+            draft.history.future = []
+
+            if (draft.history.past.length > draft.history.maxSize) {
+              draft.history.past.shift()
+            }
+
+            // Append to root
+            draft.root!.objects.push(node)
+          })
+
+          const newState = get()
+          if (newState.root) {
+            set({ _nodeIndex: buildNodeIndex(newState.root) })
+          }
+        },
+
+        clear: () => {
+          const state = get()
+          if (!state.root) return
+
+          set((draft) => {
+            draft.history.past.push(
+              JSON.parse(JSON.stringify(draft.root)) as GroupNode
+            )
+            draft.history.future = []
+            
+            if (draft.history.past.length > draft.history.maxSize) {
+              draft.history.past.shift()
+            }
+
+            draft.root!.objects = []
+            draft.selectedNodeIds = []
+          })
+
+          const newState = get()
+          if (newState.root) {
+            set({ _nodeIndex: buildNodeIndex(newState.root) })
           }
         },
 
@@ -652,9 +721,9 @@ export const useCanvasStore = create<CanvasStore>()(
 
         // ── Initialization ──────────────────────
 
-        loadFromJSON: (json: unknown) => {
-          // Validate the full tree with Zod + structural checks
-          const validatedRoot = validateTree(json)
+        loadScene: (json: unknown) => {
+          // Parse, sanitize, and validate the full tree
+          const validatedRoot = loadFromFabricJSON(json)
 
           set((draft) => {
             draft.root = validatedRoot as GroupNode
@@ -717,6 +786,8 @@ export function useCanvasActions() {
     updateNodeProperty: state.updateNodeProperty,
     updateMultipleProperties: state.updateMultipleProperties,
     deleteNode: state.deleteNode,
+    addNode: state.addNode,
+    clear: state.clear,
     selectNode: state.selectNode,
     selectMultipleNodes: state.selectMultipleNodes,
     clearSelection: state.clearSelection,
@@ -727,7 +798,7 @@ export function useCanvasActions() {
     centerNode: state.centerNode,
     undo: state.undo,
     redo: state.redo,
-    loadFromJSON: state.loadFromJSON,
+    loadScene: state.loadScene,
     exportToJSON: state.exportToJSON,
   }))
 }

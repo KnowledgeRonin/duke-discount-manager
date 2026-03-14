@@ -1,32 +1,41 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { Sidebar } from "@/components/sidebar/sidebar";
-import { Block } from "@/utils/types";
-import { Canvas } from "@/components/canvas/canvas";
-import { VOUCHER_JSON_2 } from "@/mockData/json2";
-import JsonExtractor from "@/utils/JsonExtractor";
-import { useHistory } from "@/utils/useHistory";
-import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-
+import { CanvasV2 } from "@/components/canvas/CanvasV2";
+import { useCanvasStore } from "@/lib/canvas/store";
+import { parseSVGToGroupNode } from "@/lib/canvas/svgParser";
+import { loadFromFabricJSON } from "@/lib/canvas/parser";
 
 import { SVG_LIBRARY } from "@/utils/library";
 import { FabricThumbnail } from "@/utils/fabricThumbnail";
 
 export default function Home() {
-  // 👇 CAMBIO 1: Reemplazamos useState por useHistory
-  const {
-    state: blocks,
-    setState: setBlocks,
-    undo,
-    redo,
-    reset: resetBlocks
-  } = useHistory<Block[]>([]);
+  // New Store API
+  const addNode = useCanvasStore((state) => state.addNode);
+  const loadScene = useCanvasStore((state) => state.loadScene);
+  const selectNode = useCanvasStore((state) => state.selectNode);
+  const clearSelection = useCanvasStore((state) => state.clearSelection);
+  const undo = useCanvasStore((state) => state.undo);
+  const redo = useCanvasStore((state) => state.redo);
+  const selectedNodeIds = useCanvasStore((state) => state.selectedNodeIds);
+  const _nodeIndex = useCanvasStore((state) => state._nodeIndex);
 
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [canvasDims, setCanvasDims] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    // Initialize empty canvas if no root exists
+    if (!useCanvasStore.getState().root) {
+      loadScene({ version: '7.0.0', objects: [] });
+    }
+  }, [loadScene]);
+
+  const handleResetCanvas = () => {
+    loadScene({ version: '7.0.0', objects: [] });
+
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -38,18 +47,31 @@ export default function Home() {
     ? SVG_LIBRARY.find(item => item.id === activeId)
     : null;
 
-  const activeBlock = blocks.find(b => b.id === selectedId) || null;
+  // Derive activeBlock for the Sidebar
+  const selectedId = selectedNodeIds[0];
+  const activeBlockNode = selectedId ? _nodeIndex.get(selectedId) : null;
+  // Temporary mapping to fit the legacy Sidebar expectations
+  const activeBlock = activeBlockNode ? {
+    // @ts-ignore
+    id: activeBlockNode.id,
+    // @ts-ignore
+    type: activeBlockNode.type === 'group' && activeBlockNode.objects ? 'SVG' : activeBlockNode.type,
+    // @ts-ignore
+    fill: activeBlockNode.fill || '#000000',
+  } : null;
 
-  // 👇 CAMBIO 2: Esto funciona igual gracias al callback de setHistory
-  const handleUpdateBlock = useCallback((id: string, newAttrs: Partial<Block>) => {
-    setBlocks((prev: Block[]) => prev.map(b => b.id === id ? { ...b, ...newAttrs } : b));
-  }, [setBlocks]);
+  const handleUpdateBlock = (id: string, newAttrs: any) => {
+    // Temporary mapping back to the store. The Sidebar will be refactored next
+    if (newAttrs.fill) {
+      useCanvasStore.getState().updateNodeProperty(id, 'fill', newAttrs.fill);
+    }
+  };
 
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && over.id === 'canvas-area') {
@@ -59,73 +81,139 @@ export default function Home() {
         const centerX = canvasDims.width > 0 ? canvasDims.width / 2 : 300;
         const centerY = canvasDims.height > 0 ? canvasDims.height / 2 : 300;
 
-        const newBlock: Block = {
-          id: `el-${Date.now()}`,
-          // @ts-ignore
-          type: originalItem.type,
-          x: centerX,
-          y: centerY,
-          rotation: 0,
-          scaleX: 3,
-          scaleY: 3,
-          fill: '#3B82F6',
-          viewBox: originalItem.viewBox,
+        // Defer internal updates to guarantee DND state has settled
+        setTimeout(async () => {
+          const store = useCanvasStore.getState();
 
-          // @ts-ignore
-          jsonData: originalItem.canvasData || undefined,
-          svgContent: originalItem.content || ''
-        };
+          if (originalItem.type === 'JSON' && originalItem.canvasData) {
+            try {
+              const groupNode = loadFromFabricJSON(originalItem.canvasData);
+              groupNode.left = centerX;
+              groupNode.top = centerY;
+              groupNode.originX = 'center';
+              groupNode.originY = 'center';
 
-        // Al soltar un nuevo bloque, lo agregamos al historial
-        // En lugar de reemplazar el array, lo sumamos (como lo tendrías en un editor real)
-        // O si quieres que solo haya 1 bloque en pantalla a la vez, déjalo como () => [newBlock]
-        setBlocks(() => [newBlock]);
-        resetBlocks([newBlock]);
+              // Apply locks to make it centered and immovable
+              groupNode.lockMovementX = true;
+              groupNode.lockMovementY = true;
+              groupNode.lockScalingX = true;
+              groupNode.lockScalingY = true;
+              groupNode.lockRotation = true;
+              groupNode.hasControls = false;
+              groupNode.hasBorders = false;
 
-        setSelectedId(newBlock.id);
+              console.log("Adding JSON node:", JSON.stringify(groupNode, null, 2));
+              store.clear(); // Ensure only one template at a time
+              loadScene({
+                version: '7.0.0',
+                objects: [groupNode]
+              });
+              selectNode(groupNode.id);
+            } catch (e) {
+              console.error("Failed to parse JSON template", e);
+            }
+          } else if (originalItem.content) {
+            try {
+              const groupNode = await parseSVGToGroupNode(originalItem.content);
+              groupNode.left = centerX;
+              groupNode.top = centerY;
+              groupNode.originX = 'center';
+              groupNode.originY = 'center';
+
+              // Apply locks to make it centered and immovable
+              groupNode.lockMovementX = true;
+              groupNode.lockMovementY = true;
+              groupNode.lockScalingX = true;
+              groupNode.lockScalingY = true;
+              groupNode.lockRotation = true;
+              groupNode.hasControls = false;
+              groupNode.hasBorders = false;
+
+              console.log("Adding SVG node:", JSON.stringify(groupNode, null, 2));
+              store.clear(); // Ensure only one template at a time
+              loadScene({
+                version: '7.0.0',
+                objects: [groupNode]
+              });
+              selectNode(groupNode.id);
+            } catch (e) {
+              console.error("Failed to parse SVG template", e);
+            }
+          }
+        }, 50);
       }
     }
     setActiveId(null);
   };
 
   const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const undoFiredRef = useRef(false);
 
-  const wrappedUndo = useCallback(() => {
-    undoFiredRef.current = true;
-    undo();
-  }, [undo]);
+  // Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Avoid triggering shortcuts when typing in inputs/textareas
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
 
-  useKeyboardShortcuts({ undo: wrappedUndo, redo, setSelectedId, containerRef: canvasContainerRef });
+      const isMod = e.ctrlKey || e.metaKey;
+      const key = e.key.toLowerCase();
+
+      if (isMod && key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        clearSelection();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo, clearSelection]);
 
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      {/*<JsonExtractor/>*/}
       <main className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
 
         {/* Canvas Area (Drop Zone) */}
         <div
           ref={canvasContainerRef}
           className="flex-1 h-full relative"
-          tabIndex={-1}         // permite recibir foco programáticamente
+          tabIndex={-1}
           style={{ outline: 'none' }}
-          onMouseDown={() => canvasContainerRef.current?.focus()}
+          onMouseDown={() => {
+            canvasContainerRef.current?.focus();
+            clearSelection(); // Deselect if clicking empty space
+          }}
         >
-          <Canvas
-            blocks={blocks}
-            onSelect={setSelectedId}
-            onUpdateBlock={handleUpdateBlock}
+          <CanvasV2
             onDimensionsChange={(dims) => setCanvasDims(dims)}
-            undoFiredRef={undoFiredRef}
           />
+          <button
+            onClick={handleResetCanvas}
+            className="absolute top-4 right-4 z-50 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded shadow-lg transition-colors"
+          >
+            Clean all
+          </button>
         </div>
 
         {/* Sidebar (Drag Source) */}
         <Sidebar
+          // @ts-ignore
           activeBlock={activeBlock}
           onUpdateBlock={handleUpdateBlock}
-          onCloseEditor={() => setSelectedId(null)}
+          onCloseEditor={() => clearSelection()}
         />
       </main>
 

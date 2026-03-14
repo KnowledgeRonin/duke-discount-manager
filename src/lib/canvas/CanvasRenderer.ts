@@ -5,6 +5,7 @@ import type {
   TextNode,
   RectNode,
   CircleNode,
+  LineNode,
   PolygonNode,
   PathNode,
 } from './types'
@@ -122,11 +123,11 @@ export class CanvasRenderer {
       strokeWidth: node.strokeWidth,
       shadow: node.shadow
         ? new fabric.Shadow({
-            color: node.shadow.color,
-            blur: node.shadow.blur,
-            offsetX: node.shadow.offsetX,
-            offsetY: node.shadow.offsetY,
-          })
+          color: node.shadow.color,
+          blur: node.shadow.blur,
+          offsetX: node.shadow.offsetX,
+          offsetY: node.shadow.offsetY,
+        })
         : null,
       selectable: node.selectable,
       evented: node.evented,
@@ -164,6 +165,16 @@ export class CanvasRenderer {
       })
     }
 
+    // Line-specific
+    if (node.type === 'line' && fabricObject instanceof fabric.Line) {
+      fabricObject.set({
+        x1: node.x1,
+        y1: node.y1,
+        x2: node.x2,
+        y2: node.y2,
+      })
+    }
+
     fabricObject.setCoords()
     this.canvas.requestRenderAll()
 
@@ -197,6 +208,9 @@ export class CanvasRenderer {
       case 'circle':
         fabricObject = this.createCircle(node, baseProps)
         break
+      case 'line':
+        fabricObject = this.createLine(node, baseProps)
+        break
       case 'polygon':
         fabricObject = this.createPolygon(node, baseProps)
         break
@@ -212,7 +226,7 @@ export class CanvasRenderer {
     }
 
     // Store the node id on the Fabric object for reverse lookups
-    ;(fabricObject as fabric.FabricObject & { id?: string }).id = node.id
+    ; (fabricObject as fabric.FabricObject & { id?: string }).id = node.id
 
     // Register in O(1) lookup map
     this.objectMap.set(node.id, fabricObject)
@@ -240,16 +254,24 @@ export class CanvasRenderer {
       fill: this.resolveFill(node.fill),
       stroke: node.stroke ?? undefined,
       strokeWidth: node.strokeWidth,
+      strokeDashArray: (node as any).strokeDashArray ?? undefined,
       shadow: node.shadow
         ? new fabric.Shadow({
-            color: node.shadow.color,
-            blur: node.shadow.blur,
-            offsetX: node.shadow.offsetX,
-            offsetY: node.shadow.offsetY,
-          })
+          color: node.shadow.color,
+          blur: node.shadow.blur,
+          offsetX: node.shadow.offsetX,
+          offsetY: node.shadow.offsetY,
+        })
         : undefined,
       selectable: node.selectable,
       evented: node.evented,
+      lockMovementX: node.lockMovementX,
+      lockMovementY: node.lockMovementY,
+      lockScalingX: node.lockScalingX,
+      lockScalingY: node.lockScalingY,
+      lockRotation: node.lockRotation,
+      hasControls: node.hasControls,
+      hasBorders: node.hasBorders
     }
   }
 
@@ -292,6 +314,15 @@ export class CanvasRenderer {
     return new fabric.Circle({
       ...baseProps,
       radius: node.radius,
+    })
+  }
+
+  private createLine(
+    node: LineNode,
+    baseProps: Partial<fabric.FabricObjectProps>
+  ): fabric.Line {
+    return new fabric.Line([node.x1, node.y1, node.x2, node.y2], {
+      ...baseProps,
     })
   }
 

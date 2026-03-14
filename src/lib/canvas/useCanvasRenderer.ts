@@ -90,9 +90,11 @@ export function useCanvasRenderer(
       const renderer = rendererRef.current
       if (!renderer || !state.root) return
 
-      // Root reference changed → full tree re-sync
-      // This covers undo/redo, loadFromJSON, and structural changes
-      if (state.root !== prevState.root) {
+      // Strict reference equality check or length difference
+      if (
+        state.root !== prevState.root ||
+        (prevState.root && state.root.objects.length !== prevState.root.objects.length)
+      ) {
         renderer.syncTree(state.root)
       }
     })

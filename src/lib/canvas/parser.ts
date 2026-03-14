@@ -12,6 +12,7 @@ const SUPPORTED_TYPES = new Set([
   'textbox',
   'rect',
   'circle',
+  'line',
   'path',
   'polygon',
   'image',
@@ -69,6 +70,7 @@ const TEXT_PROPERTIES = [
 
 const RECT_PROPERTIES = ['rx', 'ry'] as const
 const CIRCLE_PROPERTIES = ['radius'] as const
+const LINE_PROPERTIES = ['x1', 'y1', 'x2', 'y2'] as const
 const POLYGON_PROPERTIES = ['points'] as const
 const PATH_PROPERTIES = ['path'] as const
 const GROUP_PROPERTIES = ['objects', 'layoutManager'] as const
@@ -127,6 +129,13 @@ const RECT_DEFAULTS: Record<string, unknown> = {
 
 const CIRCLE_DEFAULTS: Record<string, unknown> = {
   radius: 50,
+}
+
+const LINE_DEFAULTS: Record<string, unknown> = {
+  x1: 0,
+  y1: 0,
+  x2: 100,
+  y2: 100,
 }
 
 // ─────────────────────────────────────────────
@@ -263,6 +272,12 @@ function sanitizeNode(raw: any): Record<string, unknown> {
       }
       break
 
+    case 'line':
+      for (const prop of LINE_PROPERTIES) {
+        node[prop] = raw[prop] ?? LINE_DEFAULTS[prop]
+      }
+      break
+
     case 'polygon':
       for (const prop of POLYGON_PROPERTIES) {
         node[prop] = raw[prop] ?? []
@@ -309,12 +324,13 @@ function sanitizeNode(raw: any): Record<string, unknown> {
  * Fabric uses 'i-text' and 'text' which we map to 'textbox'.
  */
 function resolveType(type: string): string {
-  switch (type) {
+  const lowerType = type.toLowerCase()
+  switch (lowerType) {
     case 'i-text':
     case 'text':
       return 'textbox'
     default:
-      return type
+      return lowerType
   }
 }
 

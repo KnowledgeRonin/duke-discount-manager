@@ -45,6 +45,7 @@ export const NodeTypeSchema = z.enum([
   'textbox',
   'rect',
   'circle',
+  'line',
   'path',
   'polygon',
   'image',
@@ -82,7 +83,17 @@ export const BaseNodeSchema = z.object({
   fill: z.union([z.string(), GradientFillSchema]),
   stroke: z.string().nullable(),
   strokeWidth: z.number().min(0),
+  strokeDashArray: z.array(z.number()).nullable().optional(),
   shadow: ShadowSchema.nullable(),
+
+  // Lock properties
+  lockMovementX: z.boolean().optional(),
+  lockMovementY: z.boolean().optional(),
+  lockScalingX: z.boolean().optional(),
+  lockScalingY: z.boolean().optional(),
+  lockRotation: z.boolean().optional(),
+  hasControls: z.boolean().optional(),
+  hasBorders: z.boolean().optional(),
 
   // Metadata
   selectable: z.boolean(),
@@ -140,6 +151,14 @@ export const RectNodeSchema = BaseNodeSchema.extend({
 export const CircleNodeSchema = BaseNodeSchema.extend({
   type: z.literal('circle'),
   radius: z.number().positive(),
+})
+
+export const LineNodeSchema = BaseNodeSchema.extend({
+  type: z.literal('line'),
+  x1: z.number(),
+  y1: z.number(),
+  x2: z.number(),
+  y2: z.number(),
 })
 
 export const PolygonNodeSchema = BaseNodeSchema.extend({
@@ -221,6 +240,7 @@ export const SceneNodeSchema: z.ZodType<SceneNode> = z.union([
   TextNodeSchema,
   RectNodeSchema,
   CircleNodeSchema,
+  LineNodeSchema,
   PolygonNodeSchema,
   PathNodeSchema,
   z.lazy(() => GroupNodeSchema),
@@ -237,6 +257,7 @@ export type BaseNode = z.infer<typeof BaseNodeSchema>
 export type TextNode = z.infer<typeof TextNodeSchema>
 export type RectNode = z.infer<typeof RectNodeSchema>
 export type CircleNode = z.infer<typeof CircleNodeSchema>
+export type LineNode = z.infer<typeof LineNodeSchema>
 export type PolygonNode = z.infer<typeof PolygonNodeSchema>
 export type PathCommand = z.infer<typeof PathCommandSchema>
 export type PathNode = z.infer<typeof PathNodeSchema>
@@ -253,6 +274,7 @@ export type SceneNode =
   | TextNode
   | RectNode
   | CircleNode
+  | LineNode
   | PolygonNode
   | PathNode
   | GroupNode
@@ -397,6 +419,8 @@ export function getSchemaForNodeType(type: NodeType): z.ZodType<SceneNode> {
       return RectNodeSchema
     case 'circle':
       return CircleNodeSchema
+    case 'line':
+      return LineNodeSchema
     case 'polygon':
       return PolygonNodeSchema
     case 'path':
