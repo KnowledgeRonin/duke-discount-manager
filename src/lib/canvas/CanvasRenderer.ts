@@ -131,6 +131,13 @@ export class CanvasRenderer {
         : null,
       selectable: node.selectable,
       evented: node.evented,
+      lockMovementX: node.lockMovementX,
+      lockMovementY: node.lockMovementY,
+      lockScalingX: node.lockScalingX,
+      lockScalingY: node.lockScalingY,
+      lockRotation: node.lockRotation,
+      hasControls: node.hasControls,
+      hasBorders: node.hasBorders,
     })
 
     // Text-specific properties
@@ -271,7 +278,7 @@ export class CanvasRenderer {
       lockScalingY: node.lockScalingY,
       lockRotation: node.lockRotation,
       hasControls: node.hasControls,
-      hasBorders: node.hasBorders
+      hasBorders: node.hasBorders,
     }
   }
 

@@ -48,6 +48,13 @@ const BASE_PROPERTIES = [
   'selectable',
   'evented',
   'locked',
+  'lockMovementX',
+  'lockMovementY',
+  'lockScalingX',
+  'lockScalingY',
+  'lockRotation',
+  'hasControls',
+  'hasBorders',
 ] as const
 
 /** Extra properties per node type */
@@ -103,6 +110,13 @@ const BASE_DEFAULTS: Record<string, unknown> = {
   selectable: true,
   evented: true,
   locked: false,
+  lockMovementX: true,
+  lockMovementY: true,
+  lockScalingX: true,
+  lockScalingY: true,
+  lockRotation: true,
+  hasControls: false,
+  hasBorders: true,
 }
 
 const TEXT_DEFAULTS: Record<string, unknown> = {
@@ -362,9 +376,9 @@ function sanitizeFill(fill: any): string | Record<string, unknown> {
       },
       colorStops: Array.isArray(fill.colorStops)
         ? fill.colorStops.map((stop: { offset?: number; color?: string }) => ({
-            offset: stop.offset ?? 0,
-            color: stop.color ?? '#000000',
-          }))
+          offset: stop.offset ?? 0,
+          color: stop.color ?? '#000000',
+        }))
         : [{ offset: 0, color: '#000000' }, { offset: 1, color: '#FFFFFF' }],
     }
   }
