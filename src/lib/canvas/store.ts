@@ -261,9 +261,6 @@ export const useCanvasStore = create<CanvasStore>()(
             const draftNode = findNodeInTree(draft.root!, nodeId)
             if (!draftNode) return
 
-            // Mutate the draft (Immer tracks this)
-            ;(draftNode as Record<string, unknown>)[property] = value
-
             // Push current root to history.past for undo
             // NOTE: draft.history is also an Immer draft, so push mutates safely
             draft.history.past.push(
@@ -275,6 +272,9 @@ export const useCanvasStore = create<CanvasStore>()(
             if (draft.history.past.length > draft.history.maxSize) {
               draft.history.past.shift()
             }
+
+            // Mutate the draft (Immer tracks this)
+            ; (draftNode as Record<string, unknown>)[property] = value
           })
 
           // 4. Rebuild the flat index after the tree changed
@@ -309,10 +309,6 @@ export const useCanvasStore = create<CanvasStore>()(
             const draftNode = findNodeInTree(draft.root!, nodeId)
             if (!draftNode) return
 
-            for (const [prop, val] of Object.entries(updates)) {
-              ;(draftNode as Record<string, unknown>)[prop] = val
-            }
-
             draft.history.past.push(
               JSON.parse(JSON.stringify(draft.root)) as GroupNode
             )
@@ -320,6 +316,10 @@ export const useCanvasStore = create<CanvasStore>()(
 
             if (draft.history.past.length > draft.history.maxSize) {
               draft.history.past.shift()
+            }
+
+            for (const [prop, val] of Object.entries(updates)) {
+              ; (draftNode as Record<string, unknown>)[prop] = val
             }
           })
 
@@ -426,7 +426,7 @@ export const useCanvasStore = create<CanvasStore>()(
               JSON.parse(JSON.stringify(draft.root)) as GroupNode
             )
             draft.history.future = []
-            
+
             if (draft.history.past.length > draft.history.maxSize) {
               draft.history.past.shift()
             }
@@ -635,8 +635,8 @@ export const useCanvasStore = create<CanvasStore>()(
             const draftNode = findNodeInTree(draft.root!, nodeId)
             if (!draftNode) return
 
-            ;(draftNode as Record<string, unknown>).left = centerX
-            ;(draftNode as Record<string, unknown>).top = centerY
+              ; (draftNode as Record<string, unknown>).left = centerX
+              ; (draftNode as Record<string, unknown>).top = centerY
           })
 
           const newState = get()
