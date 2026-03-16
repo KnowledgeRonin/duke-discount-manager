@@ -73,13 +73,6 @@ const TEXT_PROPERTIES = [
   'textAlign',
   'editable',
   'splitByGrapheme',
-  'lockMovementX',
-  'lockMovementY',
-  'lockScalingX',
-  'lockScalingY',
-  'lockRotation',
-  'hasControls',
-  'hasBorders',
 ] as const
 
 const RECT_PROPERTIES = ['rx', 'ry'] as const
@@ -117,11 +110,11 @@ const BASE_DEFAULTS: Record<string, unknown> = {
   selectable: true,
   evented: true,
   locked: false,
-  lockMovementX: true,
-  lockMovementY: true,
-  lockScalingX: true,
-  lockScalingY: true,
-  lockRotation: true,
+  lockMovementX: false,
+  lockMovementY: false,
+  lockScalingX: false,
+  lockScalingY: false,
+  lockRotation: false,
   hasControls: false,
   hasBorders: true,
 }
@@ -141,13 +134,6 @@ const TEXT_DEFAULTS: Record<string, unknown> = {
   textAlign: 'left',
   editable: true,
   splitByGrapheme: false,
-  lockMovementX: false,
-  lockMovementY: false,
-  lockScalingX: false,
-  lockScalingY: false,
-  lockRotation: false,
-  hasControls: true,
-  hasBorders: true,
 }
 
 const RECT_DEFAULTS: Record<string, unknown> = {
@@ -219,7 +205,6 @@ export function loadFromFabricJSON(json: any): GroupNode {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractObjects(json: any): any[] {
-
   if (Array.isArray(json)) return json
 
   if (json && typeof json === 'object') {

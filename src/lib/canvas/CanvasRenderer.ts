@@ -67,7 +67,6 @@ export class CanvasRenderer {
    */
   initialize(root: GroupNode): void {
     this._isSyncing = true
-
     this.canvas.clear()
     this.objectMap.clear()
 
