@@ -88,13 +88,26 @@ export function useCanvasRenderer(
   useEffect(() => {
     const unsubscribe = useCanvasStore.subscribe((state, prevState) => {
       const renderer = rendererRef.current
-      if (!renderer || !state.root) return
+      if (!renderer) return
 
-      // Strict reference equality check or length difference
-      if (
-        state.root !== prevState.root ||
-        (prevState.root && state.root.objects.length !== prevState.root.objects.length)
-      ) {
+      // Root was removed entirely (edge-case cleanup)
+      if (!state.root) {
+        renderer.discardSelection()
+        return
+      }
+
+      const rootChanged = state.root !== prevState.root
+      const objectCountChanged =
+        prevState.root != null &&
+        state.root.objects.length !== prevState.root.objects.length
+
+      if (rootChanged || objectCountChanged) {
+        // syncTree already discards stale selections internally,
+        // but if the root reference changed (loadScene / new JSON),
+        // make absolutely sure any previous selection is gone first.
+        if (rootChanged) {
+          renderer.discardSelection()
+        }
         renderer.syncTree(state.root)
       }
     })

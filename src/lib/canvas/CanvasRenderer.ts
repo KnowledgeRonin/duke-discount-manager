@@ -200,7 +200,19 @@ export class CanvasRenderer {
     const newNodeIds = new Set<string>()
     this.collectNodeIds(root, newNodeIds)
 
-    // 2. Remove Fabric objects whose nodes were deleted from the tree
+    // 2. Check if any currently selected Fabric objects will be removed.
+    //    If so, discard the active selection BEFORE removing them so Fabric
+    //    doesn't hold a stale reference to a non-existent object.
+    const activeObjects = this.canvas.getActiveObjects()
+    const willLoseSelection = activeObjects.some((obj) => {
+      const id = (obj as fabric.FabricObject & { id?: string }).id
+      return id !== undefined && !newNodeIds.has(id)
+    })
+    if (willLoseSelection || activeObjects.length === 0 && this.canvas.getActiveObject()) {
+      this.canvas.discardActiveObject()
+    }
+
+    // 3. Remove Fabric objects whose nodes were deleted from the tree
     for (const [id, fabricObj] of this.objectMap) {
       if (!newNodeIds.has(id)) {
         this.canvas.remove(fabricObj)
