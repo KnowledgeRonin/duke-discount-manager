@@ -194,7 +194,6 @@ export default function Home() {
           style={{ outline: 'none' }}
           onMouseDown={() => {
             canvasContainerRef.current?.focus();
-            clearSelection(); // Deselect if clicking empty space
           }}
         >
           <CanvasV2

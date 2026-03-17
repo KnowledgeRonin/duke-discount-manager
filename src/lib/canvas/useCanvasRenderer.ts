@@ -102,12 +102,6 @@ export function useCanvasRenderer(
         state.root.objects.length !== prevState.root.objects.length
 
       if (rootChanged || objectCountChanged) {
-        // syncTree already discards stale selections internally,
-        // but if the root reference changed (loadScene / new JSON),
-        // make absolutely sure any previous selection is gone first.
-        if (rootChanged) {
-          renderer.discardSelection()
-        }
         renderer.syncTree(state.root)
       }
     })

@@ -4,7 +4,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { SVG_LIBRARY } from "@/utils/library";
 // We don't import Block here anymore, we'll use a loose type for now
 // import { Block } from "@/utils/types";
-import { ScrollArea } from "@/components/ui/scroll-area"; 
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -48,7 +48,7 @@ function TemplateLibrary() {
       </div>
 
       <Separator className="my-2" />
-      
+
       <ScrollArea className="flex-1 px-4">
         <div className="grid gap-3 pb-4">
           {SVG_LIBRARY.map((item) => (
@@ -63,14 +63,14 @@ function TemplateLibrary() {
   );
 }
 
-// --- EDITOR VIEW ---
+// --- BLOCK EDITOR ---
 function BlockEditor({ block, onChange, onBack }: { block: any, onChange: any, onBack: any }) {
 
   // Safety check: The new architecture allows gradients which are objects.
   // The HTML color picker needs a hex string.
-  const fillColorString = typeof block.fill === 'string' 
-      ? block.fill 
-      : (block.fill?.colorStops?.[0]?.color || '#000000');
+  const fillColorString = typeof block.fill === 'string'
+    ? block.fill
+    : (block.fill?.colorStops?.[0]?.color || '#000000');
 
   return (
     <div className="flex flex-col h-full">
@@ -100,10 +100,10 @@ function BlockEditor({ block, onChange, onBack }: { block: any, onChange: any, o
                 className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-0 p-0"
               />
             </div>
-            <Input 
-                value={fillColorString} 
-                onChange={(e) => onChange({ fill: e.target.value })}
-                className="font-mono uppercase w-28"
+            <Input
+              value={fillColorString}
+              onChange={(e) => onChange({ fill: e.target.value })}
+              className="font-mono uppercase w-28"
             />
           </div>
         </div>
@@ -125,21 +125,21 @@ function DraggableSidebarItem({ item }: { item: any }) {
     }
   });
 
-return (
+  return (
     <div ref={setNodeRef} {...listeners} {...attributes} className="touch-none w-full">
-       <Card
-        className={`cursor-grab active:cursor-grabbing hover:border-blue-400 transition-all overflow-hidden relative ${
-            isDragging ? 'opacity-50 ring-2 ring-blue-400' : 'hover:shadow-md'
-        } aspect-[2/1]`} 
-       >
-         <div className="w-full h-full flex items-center justify-center p-0">
-            {/* Renderizamos el Thumbnail a partir del JSON */}
-            {item.type === 'JSON' && item.canvasData ? (
-               <FabricThumbnail jsonData={item.canvasData} />
-            ) : (
-               <div dangerouslySetInnerHTML={{ __html: item.content }} />
-            )}
-         </div>
-       </Card>
+      <Card
+        className={`cursor-grab active:cursor-grabbing hover:border-blue-400 transition-all overflow-hidden relative ${isDragging ? 'opacity-50 ring-2 ring-blue-400' : 'hover:shadow-md'
+          } aspect-[2/1]`}
+      >
+        <div className="w-full h-full flex items-center justify-center p-0">
+          {/* Renderizamos el Thumbnail a partir del JSON */}
+          {item.type === 'JSON' && item.canvasData ? (
+            <FabricThumbnail jsonData={item.canvasData} />
+          ) : (
+            <div dangerouslySetInnerHTML={{ __html: item.content }} />
+          )}
+        </div>
+      </Card>
     </div>
-  );}
+  );
+}
