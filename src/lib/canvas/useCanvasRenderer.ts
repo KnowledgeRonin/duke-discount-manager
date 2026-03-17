@@ -72,6 +72,7 @@ export function useCanvasRenderer(
     const currentRoot = useCanvasStore.getState().root
     if (currentRoot) {
       renderer.initialize(currentRoot)
+      renderer.fitToScreen()
       prevRootRef.current = currentRoot
     }
 
@@ -103,6 +104,7 @@ export function useCanvasRenderer(
 
       if (rootChanged || objectCountChanged) {
         renderer.syncTree(state.root)
+        renderer.fitToScreen()
       }
     })
 

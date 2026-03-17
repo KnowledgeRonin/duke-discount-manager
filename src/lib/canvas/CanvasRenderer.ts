@@ -619,6 +619,51 @@ export class CanvasRenderer {
   }
 
   /**
+   * Adjusts zoom and viewport so all objects fit within the visible canvas area.
+   */
+  fitToScreen(): void {
+    const objects = this.canvas.getObjects()
+    if (objects.length === 0) return
+
+    // Calculate the bounding box of all objects (in canvas coordinates, before zoom)
+    const bounds = objects.reduce(
+      (acc, obj) => {
+        const r = obj.getBoundingRect()
+        return {
+          left: Math.min(acc.left, r.left),
+          top: Math.min(acc.top, r.top),
+          right: Math.max(acc.right, r.left + r.width),
+          bottom: Math.max(acc.bottom, r.top + r.height),
+        }
+      },
+      { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity }
+    )
+
+    const contentW = bounds.right - bounds.left
+    const contentH = bounds.bottom - bounds.top
+
+    if (contentW <= 0 || contentH <= 0) return
+
+    const canvasW = this.canvas.getWidth()
+    const canvasH = this.canvas.getHeight()
+
+    // Zoom to fit with padding
+    const padding = 180
+    const zoom = Math.min(
+      (canvasW - padding * 2) / contentW,
+      (canvasH - padding * 2) / contentH
+    )
+
+    // Center the content
+    const vpX = (canvasW - contentW * zoom) / 2 - bounds.left * zoom
+    const vpY = (canvasH - contentH * zoom) / 2 - bounds.top * zoom
+
+    this.canvas.setZoom(zoom)
+    this.canvas.setViewportTransform([zoom, 0, 0, zoom, vpX, vpY])
+    this.canvas.requestRenderAll()
+  }
+
+  /**
    * Resizes the canvas to fill its container.
    */
   resize(width: number, height: number): void {
