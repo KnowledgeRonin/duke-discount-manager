@@ -188,11 +188,71 @@ export class CanvasRenderer {
   }
 
   /**
-   * Synchronizes the entire tree by re-initializing the canvas.
-   * Use for bulk changes like undo/redo or loading new state.
+   * Synchronizes the entire tree incrementally.
+   * - Removes Fabric objects whose nodes no longer exist in the tree.
+   * - Updates existing Fabric objects in-place via syncNode.
+   * - Creates and adds new Fabric objects for nodes not yet on the canvas.
    */
   syncTree(root: GroupNode): void {
-    this.initialize(root)
+    this._isSyncing = true
+
+    // 1. Collect all node IDs currently in the new tree
+    const newNodeIds = new Set<string>()
+    this.collectNodeIds(root, newNodeIds)
+
+    // 2. Remove Fabric objects whose nodes were deleted from the tree
+    for (const [id, fabricObj] of this.objectMap) {
+      if (!newNodeIds.has(id)) {
+        this.canvas.remove(fabricObj)
+        this.objectMap.delete(id)
+      }
+    }
+
+    // 3. Update existing objects or create new ones
+    for (const child of root.objects) {
+      this.syncOrCreateNode(child)
+    }
+
+    this.canvas.requestRenderAll()
+    this._isSyncing = false
+  }
+
+  /**
+   * Recursively collects all node IDs from a scene tree.
+   */
+  private collectNodeIds(node: SceneNode, ids: Set<string>): void {
+    ids.add(node.id)
+    if (node.type === 'group') {
+      for (const child of node.objects) {
+        this.collectNodeIds(child, ids)
+      }
+    }
+  }
+
+  /**
+   * If a Fabric object already exists for this node, updates it in-place.
+   * Otherwise, creates a new Fabric object and adds it to the canvas.
+   */
+  private syncOrCreateNode(node: SceneNode): void {
+    const existing = this.objectMap.get(node.id)
+
+    if (existing) {
+      // Update in-place — reuse syncNode logic
+      this.syncNode(node)
+    } else {
+      // Brand-new node — create and add to canvas
+      const fabricObj = this.createFabricObject(node)
+      if (fabricObj) {
+        this.canvas.add(fabricObj)
+      }
+    }
+
+    // Recurse into group children
+    if (node.type === 'group') {
+      for (const child of node.objects) {
+        this.syncOrCreateNode(child)
+      }
+    }
   }
 
   // ─────────────────────────────────────────────
