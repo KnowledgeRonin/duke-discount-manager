@@ -225,8 +225,33 @@ export class CanvasRenderer {
       this.syncOrCreateNode(child)
     }
 
+    // 4. Sync z-order: reorder canvas/group objects to match scene graph
+    root.objects.forEach((node, targetIndex) => {
+      const fabricObj = this.objectMap.get(node.id)
+      if (fabricObj) this.canvas.moveObjectTo(fabricObj, targetIndex)
+    })
+    this.syncGroupZOrder(root)
+
     this.canvas.requestRenderAll()
     this._isSyncing = false
+  }
+
+  /**
+   * Recursively reorders children inside Fabric Groups to match
+   * the scene graph order. Call after syncOrCreateNode completes.
+   */
+  private syncGroupZOrder(groupNode: GroupNode): void {
+    for (const child of groupNode.objects) {
+      if (child.type !== 'group') continue
+      const fabricGroup = this.objectMap.get(child.id)
+      if (fabricGroup instanceof fabric.Group) {
+        child.objects.forEach((grandchild, idx) => {
+          const fabricChild = this.objectMap.get(grandchild.id)
+          if (fabricChild) fabricGroup.moveObjectTo(fabricChild, idx)
+        })
+      }
+      this.syncGroupZOrder(child)
+    }
   }
 
   /**
