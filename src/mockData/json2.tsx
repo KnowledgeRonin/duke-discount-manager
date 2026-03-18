@@ -693,6 +693,7 @@ export const VOUCHER_JSON_2 = {
       "fill": "",
       "stroke": "#752f00",
       "strokeWidth": 0.5,
+      "strokeDashArray": [1.96, 1.96],
       "shadow": null,
       "lockMovementX": false,
       "lockMovementY": false,

@@ -12614,6 +12614,7 @@ export const VOUCHER_JSON_5 =
       "fill": "",
       "stroke": "#752f00",
       "strokeWidth": 1,
+      "strokeDashArray": [3, 3],
       "shadow": null,
       "lockMovementX": false,
       "lockMovementY": false,

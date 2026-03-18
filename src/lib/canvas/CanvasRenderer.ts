@@ -120,6 +120,7 @@ export class CanvasRenderer {
       fill: this.resolveFill(node.fill),
       stroke: node.stroke ?? undefined,
       strokeWidth: node.strokeWidth,
+      strokeDashArray: node.strokeDashArray ?? undefined,
       shadow: node.shadow
         ? new fabric.Shadow({
           color: node.shadow.color,

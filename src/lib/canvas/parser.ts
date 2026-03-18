@@ -44,6 +44,7 @@ const BASE_PROPERTIES = [
   'fill',
   'stroke',
   'strokeWidth',
+  'strokeDashArray',
   'shadow',
   'selectable',
   'evented',
@@ -106,6 +107,7 @@ const BASE_DEFAULTS: Record<string, unknown> = {
   fill: '#000000',
   stroke: null,
   strokeWidth: 0,
+  strokeDashArray: null,
   shadow: null,
   selectable: true,
   evented: true,
@@ -255,6 +257,9 @@ function sanitizeNode(raw: any): Record<string, unknown> {
         : nanoid()
     } else if (prop === 'fill') {
       node.fill = sanitizeFill(raw.fill)
+    } else if (prop === 'strokeDashArray') {
+      const sda = raw.strokeDashArray
+      node.strokeDashArray = Array.isArray(sda) && sda.length > 0 ? sda : null
     } else if (prop === 'shadow') {
       node.shadow = sanitizeShadow(raw.shadow)
     } else {
