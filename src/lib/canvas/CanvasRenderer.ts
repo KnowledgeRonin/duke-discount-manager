@@ -698,6 +698,26 @@ export class CanvasRenderer {
   }
 
   /**
+   * Exports the canvas as a PNG or JPEG and triggers a browser download.
+   * Deselects all active objects before capturing so handles don't appear.
+   */
+  exportImage(options?: { format?: 'png' | 'jpeg'; multiplier?: number; quality?: number }): void {
+    const { format = 'png', multiplier = 2, quality = 1 } = options ?? {}
+
+    this.canvas.discardActiveObject()
+    this.canvas.renderAll()
+
+    const dataURL = this.canvas.toDataURL({ format, multiplier, quality })
+    const date = new Date().toISOString().slice(0, 10)
+    const filename = `discount-template-${date}.${format}`
+
+    const link = document.createElement('a')
+    link.href = dataURL
+    link.download = filename
+    link.click()
+  }
+
+  /**
    * Cleans up all resources.
    */
   dispose(): void {

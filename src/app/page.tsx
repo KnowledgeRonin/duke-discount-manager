@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { Sidebar } from "@/components/sidebar/sidebar";
-import { CanvasV2 } from "@/components/canvas/CanvasV2";
+import { CanvasV2, type CanvasV2Handle } from "@/components/canvas/CanvasV2";
 import { useCanvasStore } from "@/lib/canvas/store";
 import { parseSVGToGroupNode } from "@/lib/canvas/svgParser";
 import { loadFromFabricJSON } from "@/lib/canvas/parser";
@@ -120,6 +120,7 @@ export default function Home() {
   };
 
   const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const canvasV2Ref = useRef<CanvasV2Handle>(null);
 
   // Keyboard Shortcuts
   useEffect(() => {
@@ -170,6 +171,7 @@ export default function Home() {
           }}
         >
           <CanvasV2
+            ref={canvasV2Ref}
             onDimensionsChange={(dims) => setCanvasDims(dims)}
           />
           <button
@@ -181,7 +183,7 @@ export default function Home() {
         </div>
 
         {/* Sidebar (Drag Source) */}
-        <Sidebar />
+        <Sidebar onExport={() => canvasV2Ref.current?.exportImage()} />
       </main>
 
       {/* Overlay */}

@@ -157,10 +157,18 @@ export function useCanvasRenderer(
     return rendererRef.current
   }, [])
 
+  /**
+   * Export the canvas as a PNG/JPEG and trigger a browser download.
+   */
+  const exportImage = useCallback((options?: { format?: 'png' | 'jpeg'; multiplier?: number; quality?: number }) => {
+    rendererRef.current?.exportImage(options)
+  }, [])
+
   return {
     rendererRef,
     syncNode,
     resize,
     getRenderer,
+    exportImage,
   }
 }

@@ -8,13 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Bold, Italic, BringToFront, SendToBack, ChevronUp, ChevronDown } from "lucide-react";
+import { ArrowLeft, Bold, Italic, BringToFront, SendToBack, ChevronUp, ChevronDown, Download } from "lucide-react";
 import { FabricThumbnail } from "@/utils/fabricThumbnail";
 import { useSelectedNode, useCanvasActions } from "@/lib/canvas";
 import type { SceneNode, TextNode } from "@/lib/canvas";
 
 // --- MAIN SIDEBAR ---
-export function Sidebar() {
+export function Sidebar({ onExport }: { onExport?: () => void }) {
   const selectedNode = useSelectedNode();
   const { clearSelection, updateNodeProperty } = useCanvasActions();
 
@@ -25,6 +25,7 @@ export function Sidebar() {
           node={selectedNode}
           onUpdateProperty={(property, value) => updateNodeProperty(selectedNode.id, property, value)}
           onBack={clearSelection}
+          onExport={onExport}
         />
       ) : (
         <TemplateLibrary />
@@ -63,10 +64,12 @@ function BlockEditor({
   node,
   onUpdateProperty,
   onBack,
+  onExport,
 }: {
   node: SceneNode;
   onUpdateProperty: (property: string, value: unknown) => void;
   onBack: () => void;
+  onExport?: () => void;
 }) {
   const fillColorString = typeof node.fill === 'string'
     ? node.fill
@@ -116,6 +119,12 @@ function BlockEditor({
 
           {/* Layer Arrangement */}
           <ArrangePanel nodeId={node.id} />
+
+          {/* Export */}
+          <Button className="w-full gap-2" onClick={onExport} disabled={!onExport}>
+            <Download className="h-4 w-4" />
+            Download PNG
+          </Button>
         </div>
       </ScrollArea>
     </div>
