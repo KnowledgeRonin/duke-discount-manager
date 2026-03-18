@@ -12,8 +12,6 @@ import { SVG_LIBRARY } from "@/utils/library";
 import { FabricThumbnail } from "@/utils/fabricThumbnail";
 
 export default function Home() {
-  // New Store API
-  const addNode = useCanvasStore((state) => state.addNode);
   const loadScene = useCanvasStore((state) => state.loadScene);
   const selectNode = useCanvasStore((state) => state.selectNode);
   const clearSelection = useCanvasStore((state) => state.clearSelection);
@@ -79,7 +77,6 @@ export default function Home() {
               groupNode.hasControls = false;
               groupNode.hasBorders = false;
 
-              console.log("Adding JSON node:", JSON.stringify(groupNode, null, 2));
               store.clear(); // Ensure only one template at a time
               loadScene({
                 version: '7.0.0',
@@ -106,7 +103,6 @@ export default function Home() {
               groupNode.hasControls = false;
               groupNode.hasBorders = false;
 
-              console.log("Adding SVG node:", JSON.stringify(groupNode, null, 2));
               store.clear(); // Ensure only one template at a time
               loadScene({
                 version: '7.0.0',

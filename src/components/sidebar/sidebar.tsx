@@ -207,7 +207,6 @@ function ArrangePanel({ nodeId }: { nodeId: string }) {
 }
 
 // --- DRAGGABLE ITEM ---
-// Important: We extracted the props to simplify things.
 function DraggableSidebarItem({ item }: { item: any }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item.id,
