@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Bold, Italic, BringToFront, SendToBack, ChevronUp, ChevronDown } from "lucide-react";
 import { FabricThumbnail } from "@/utils/fabricThumbnail";
 import { useSelectedNode, useCanvasActions } from "@/lib/canvas";
-import type { SceneNode } from "@/lib/canvas";
+import type { SceneNode, TextNode } from "@/lib/canvas";
 
 // --- MAIN SIDEBAR ---
 export function Sidebar() {
@@ -86,28 +86,122 @@ function BlockEditor({
         </div>
       </div>
 
-      <ScrollArea className="flex-1 p-4 space-y-6">
-        {/* Color Picker */}
-        <div className="space-y-2">
-          <Label htmlFor="color-picker">Fill Color</Label>
-          <div className="flex items-center gap-3">
-            <div className="relative overflow-hidden rounded-md border shadow-sm w-10 h-10">
-              <input
-                id="color-picker"
-                type="color"
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-6">
+          {/* Text Formatting — only for textbox nodes */}
+          {node.type === 'textbox' && (
+            <TextFormattingPanel node={node} onUpdateProperty={onUpdateProperty} />
+          )}
+
+          {/* Color Picker */}
+          <div className="space-y-2">
+            <Label htmlFor="color-picker">Fill Color</Label>
+            <div className="flex items-center gap-3">
+              <div className="relative overflow-hidden rounded-md border shadow-sm w-10 h-10">
+                <input
+                  id="color-picker"
+                  type="color"
+                  value={fillColorString}
+                  onChange={(e) => onUpdateProperty('fill', e.target.value)}
+                  className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-0 p-0"
+                />
+              </div>
+              <Input
                 value={fillColorString}
                 onChange={(e) => onUpdateProperty('fill', e.target.value)}
-                className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-0 p-0"
+                className="font-mono uppercase w-28"
               />
             </div>
-            <Input
-              value={fillColorString}
-              onChange={(e) => onUpdateProperty('fill', e.target.value)}
-              className="font-mono uppercase w-28"
-            />
           </div>
+
+          {/* Layer Arrangement */}
+          <ArrangePanel nodeId={node.id} />
         </div>
       </ScrollArea>
+    </div>
+  );
+}
+
+// --- TEXT FORMATTING PANEL ---
+function TextFormattingPanel({
+  node,
+  onUpdateProperty,
+}: {
+  node: TextNode;
+  onUpdateProperty: (property: string, value: unknown) => void;
+}) {
+  const isBold = node.fontWeight === 'bold' || (typeof node.fontWeight === 'number' && node.fontWeight >= 700);
+  const isItalic = node.fontStyle === 'italic';
+
+  return (
+    <div className="space-y-3">
+      <Label>Text</Label>
+
+      {/* Font Size */}
+      <div className="space-y-1">
+        <Label htmlFor="font-size" className="text-xs text-muted-foreground">Font Size</Label>
+        <Input
+          id="font-size"
+          type="number"
+          min={1}
+          max={500}
+          value={node.fontSize}
+          onChange={(e) => {
+            const val = Number(e.target.value);
+            if (val >= 1 && val <= 500) onUpdateProperty('fontSize', val);
+          }}
+          className="w-24"
+        />
+      </div>
+
+      {/* Bold / Italic toggles */}
+      <div className="flex gap-2">
+        <Button
+          variant={isBold ? 'default' : 'outline'}
+          size="icon"
+          onClick={() => onUpdateProperty('fontWeight', isBold ? 'normal' : 'bold')}
+          aria-label="Toggle bold"
+        >
+          <Bold className="h-4 w-4" />
+        </Button>
+        <Button
+          variant={isItalic ? 'default' : 'outline'}
+          size="icon"
+          onClick={() => onUpdateProperty('fontStyle', isItalic ? 'normal' : 'italic')}
+          aria-label="Toggle italic"
+        >
+          <Italic className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// --- ARRANGE PANEL ---
+function ArrangePanel({ nodeId }: { nodeId: string }) {
+  const { bringToFront, sendToBack, bringForward, sendBackward } = useCanvasActions();
+
+  return (
+    <div className="space-y-2">
+      <Label>Arrange</Label>
+      <div className="grid grid-cols-2 gap-1">
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => bringToFront(nodeId)}>
+          <BringToFront className="h-3.5 w-3.5" />
+          Bring to Front
+        </Button>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => sendToBack(nodeId)}>
+          <SendToBack className="h-3.5 w-3.5" />
+          Send to Back
+        </Button>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => bringForward(nodeId)}>
+          <ChevronUp className="h-3.5 w-3.5" />
+          Bring Forward
+        </Button>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => sendBackward(nodeId)}>
+          <ChevronDown className="h-3.5 w-3.5" />
+          Send Backward
+        </Button>
+      </div>
     </div>
   );
 }
