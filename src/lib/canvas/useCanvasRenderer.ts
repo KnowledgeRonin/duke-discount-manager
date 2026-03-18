@@ -22,6 +22,13 @@ export function useCanvasRenderer(
 ) {
   const rendererRef = useRef<CanvasRenderer | null>(null)
 
+  // True while updateMultipleProperties is being called as a result of a
+  // Fabric canvas event (drag / scale / rotate). In that case the canvas
+  // already has the correct state, so the store subscription must NOT
+  // trigger a redundant syncTree that re-applies stale properties and
+  // causes a visible pixel-shift.
+  const fromFabricEventRef = useRef(false)
+
   // Store selectors — stable references
   const updateMultipleProperties = useCanvasStore(
     (s) => s.updateMultipleProperties
@@ -64,7 +71,9 @@ export function useCanvasRenderer(
       if (changes.angle !== undefined) safeChanges.angle = changes.angle
 
       if (Object.keys(safeChanges).length > 0) {
+        fromFabricEventRef.current = true
         updateMultipleProperties(nodeId, safeChanges)
+        fromFabricEventRef.current = false
       }
     })
 
@@ -97,6 +106,14 @@ export function useCanvasRenderer(
         return
       }
 
+      // Skip re-sync when the store update originated from a Fabric canvas
+      // event (drag / scale / rotate). Zustand's subscribe fires synchronously
+      // inside set(), so fromFabricEventRef is still true at this point.
+      // The canvas already reflects the correct state — re-syncing would
+      // re-apply stale store properties (width, height, originX…) and cause
+      // a visible pixel-shift toward nearby objects.
+      if (fromFabricEventRef.current) return
+
       const rootChanged = state.root !== prevState.root
       const objectCountChanged =
         prevState.root != null &&
@@ -104,7 +121,9 @@ export function useCanvasRenderer(
 
       if (rootChanged || objectCountChanged) {
         renderer.syncTree(state.root)
-        renderer.fitToScreen()
+        if (objectCountChanged) {
+          renderer.fitToScreen()
+        }
       }
     })
 

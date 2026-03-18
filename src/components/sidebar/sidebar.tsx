@@ -2,34 +2,29 @@
 
 import { useDraggable } from "@dnd-kit/core";
 import { SVG_LIBRARY } from "@/utils/library";
-// We don't import Block here anymore, we'll use a loose type for now
-// import { Block } from "@/utils/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, GripVertical } from "lucide-react";
-import { FabricThumbnail } from "@/utils/fabricThumbnail"
-
-// --- PROPS ---
-interface SidebarProps {
-  // We use any for now as the app transitions from Block to SceneNode
-  activeBlock: any | null;
-  onUpdateBlock: (id: string, data: any) => void;
-  onCloseEditor: () => void;
-}
+import { ArrowLeft } from "lucide-react";
+import { FabricThumbnail } from "@/utils/fabricThumbnail";
+import { useSelectedNode, useCanvasActions } from "@/lib/canvas";
+import type { SceneNode } from "@/lib/canvas";
 
 // --- MAIN SIDEBAR ---
-export function Sidebar({ activeBlock, onUpdateBlock, onCloseEditor }: SidebarProps) {
+export function Sidebar() {
+  const selectedNode = useSelectedNode();
+  const { clearSelection, updateNodeProperty } = useCanvasActions();
+
   return (
     <div className="h-full border-l bg-background flex flex-col w-80 shadow-sm z-10">
-      {activeBlock ? (
+      {selectedNode ? (
         <BlockEditor
-          block={activeBlock}
-          onChange={(data: any) => onUpdateBlock(activeBlock.id, data)}
-          onBack={onCloseEditor}
+          node={selectedNode}
+          onUpdateProperty={(property, value) => updateNodeProperty(selectedNode.id, property, value)}
+          onBack={clearSelection}
         />
       ) : (
         <TemplateLibrary />
@@ -64,13 +59,18 @@ function TemplateLibrary() {
 }
 
 // --- BLOCK EDITOR ---
-function BlockEditor({ block, onChange, onBack }: { block: any, onChange: any, onBack: any }) {
-
-  // Safety check: The new architecture allows gradients which are objects.
-  // The HTML color picker needs a hex string.
-  const fillColorString = typeof block.fill === 'string'
-    ? block.fill
-    : (block.fill?.colorStops?.[0]?.color || '#000000');
+function BlockEditor({
+  node,
+  onUpdateProperty,
+  onBack,
+}: {
+  node: SceneNode;
+  onUpdateProperty: (property: string, value: unknown) => void;
+  onBack: () => void;
+}) {
+  const fillColorString = typeof node.fill === 'string'
+    ? node.fill
+    : ((node.fill as any)?.colorStops?.[0]?.color ?? '#000000');
 
   return (
     <div className="flex flex-col h-full">
@@ -79,9 +79,9 @@ function BlockEditor({ block, onChange, onBack }: { block: any, onChange: any, o
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h3 className="font-semibold text-sm">Edit {block.type}</h3>
+          <h3 className="font-semibold text-sm">Edit {node.type}</h3>
           <p className="text-xs text-muted-foreground text-ellipsis overflow-hidden w-40">
-            ID: {block.id}
+            ID: {node.id}
           </p>
         </div>
       </div>
@@ -96,13 +96,13 @@ function BlockEditor({ block, onChange, onBack }: { block: any, onChange: any, o
                 id="color-picker"
                 type="color"
                 value={fillColorString}
-                onChange={(e) => onChange({ fill: e.target.value })}
+                onChange={(e) => onUpdateProperty('fill', e.target.value)}
                 className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-0 p-0"
               />
             </div>
             <Input
               value={fillColorString}
-              onChange={(e) => onChange({ fill: e.target.value })}
+              onChange={(e) => onUpdateProperty('fill', e.target.value)}
               className="font-mono uppercase w-28"
             />
           </div>

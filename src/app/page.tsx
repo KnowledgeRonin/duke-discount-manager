@@ -19,9 +19,6 @@ export default function Home() {
   const clearSelection = useCanvasStore((state) => state.clearSelection);
   const undo = useCanvasStore((state) => state.undo);
   const redo = useCanvasStore((state) => state.redo);
-  const selectedNodeIds = useCanvasStore((state) => state.selectedNodeIds);
-  const _nodeIndex = useCanvasStore((state) => state._nodeIndex);
-
   const [activeId, setActiveId] = useState<string | null>(null);
   const [canvasDims, setCanvasDims] = useState({ width: 0, height: 0 });
 
@@ -46,26 +43,6 @@ export default function Home() {
   const activeSidebarItem = activeId
     ? SVG_LIBRARY.find(item => item.id === activeId)
     : null;
-
-  // Derive activeBlock for the Sidebar
-  const selectedId = selectedNodeIds[0];
-  const activeBlockNode = selectedId ? _nodeIndex.get(selectedId) : null;
-  // Temporary mapping to fit the legacy Sidebar expectations
-  const activeBlock = activeBlockNode ? {
-    // @ts-ignore
-    id: activeBlockNode.id,
-    // @ts-ignore
-    type: activeBlockNode.type === 'group' && activeBlockNode.objects ? 'SVG' : activeBlockNode.type,
-    // @ts-ignore
-    fill: activeBlockNode.fill || '#000000',
-  } : null;
-
-  const handleUpdateBlock = (id: string, newAttrs: any) => {
-    // Temporary mapping back to the store. The Sidebar will be refactored next
-    if (newAttrs.fill) {
-      useCanvasStore.getState().updateNodeProperty(id, 'fill', newAttrs.fill);
-    }
-  };
 
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id);
@@ -208,12 +185,7 @@ export default function Home() {
         </div>
 
         {/* Sidebar (Drag Source) */}
-        <Sidebar
-          // @ts-ignore
-          activeBlock={activeBlock}
-          onUpdateBlock={handleUpdateBlock}
-          onCloseEditor={() => clearSelection()}
-        />
+        <Sidebar />
       </main>
 
       {/* Overlay */}

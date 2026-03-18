@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
+import { useShallow } from 'zustand/react/shallow'
 
 import type {
   SceneNode,
@@ -782,7 +783,7 @@ export function useNodeProperty<T>(
  * Returns only the action functions (stable references, no re-renders).
  */
 export function useCanvasActions() {
-  return useCanvasStore((state) => ({
+  return useCanvasStore(useShallow((state) => ({
     updateNodeProperty: state.updateNodeProperty,
     updateMultipleProperties: state.updateMultipleProperties,
     deleteNode: state.deleteNode,
@@ -800,5 +801,5 @@ export function useCanvasActions() {
     redo: state.redo,
     loadScene: state.loadScene,
     exportToJSON: state.exportToJSON,
-  }))
+  })))
 }
