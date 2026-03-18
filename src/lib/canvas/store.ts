@@ -745,6 +745,12 @@ export const useCanvasStore = create<CanvasStore>()(
         name: 'canvas-storage',
         // Only persist the root tree, not transient state like selection or index
         partialize: (state) => ({ root: state.root }),
+        // Rebuild the node index after rehydration — it is not persisted
+        onRehydrateStorage: () => (state) => {
+          if (state?.root) {
+            state._nodeIndex = buildNodeIndex(state.root)
+          }
+        },
       }
     ),
     { name: 'CanvasEditorStore' }
