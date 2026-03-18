@@ -130,70 +130,53 @@ export const parseSVGToGroupNode = async (svgString: string): Promise<GroupNode>
     if (!fabricObj) return;
 
     if (fabricObj.type === "text" || fabricObj.type === "i-text") {
-      let calculatedLineHeight = 1.16;
+      if (!element.childNodes || element.childNodes.length === 0) return;
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const fontSize = (fabricObj as any).fontSize || 16;
+      const children = Array.from(element.childNodes) as Element[];
+      const tspans = children.filter((node) => node.nodeName === "tspan");
 
-      if (element.childNodes && element.childNodes.length > 0) {
-        const children = Array.from(element.childNodes) as Element[];
-        const tspans = children.filter((node) => node.nodeName === "tspan");
+      // Build per-line data: each entry is the text and its absolute y offset
+      // from the text element's origin (which is the baseline of the first line).
+      // Math: top_of_line_N = p.y + y_N  (baseline offset cancels when same fontSize)
+      const lines: Array<{ text: string; x: number; y: number }> = [];
+      let currentY = 0;
 
-        if (tspans.length > 0) {
-          const firstNewlineTspan = tspans.find((node) => {
-            const yVal  = parseFloat(node.getAttribute("y")  || "0");
-            const dyVal = parseFloat(node.getAttribute("dy") || "0");
-            return yVal !== 0 || dyVal !== 0;
-          });
+      children.forEach((node) => {
+        if (node.nodeType === 3) {
+          // Direct text node — sits at the current y (initially 0)
+          const text = (node.textContent || "").trim();
+          if (text) lines.push({ text, x: 0, y: currentY });
+        } else if (node.nodeType === 1 && node.nodeName === "tspan") {
+          const text = node.textContent || "";
+          const xAttr  = node.getAttribute("x");
+          const yAttr  = node.getAttribute("y");
+          const dyAttr = node.getAttribute("dy");
 
-          if (firstNewlineTspan) {
-            const dyVal = parseFloat(firstNewlineTspan.getAttribute("dy") || "0");
-            const yVal  = parseFloat(firstNewlineTspan.getAttribute("y")  || "0");
-            const distanceY = dyVal !== 0 ? dyVal : yVal;
-            if (distanceY > 0 && fontSize > 0) {
-              calculatedLineHeight = distanceY / fontSize;
-            }
+          const lineX = xAttr !== null ? parseFloat(xAttr) : 0;
+
+          if (yAttr !== null) {
+            currentY = parseFloat(yAttr);
+          } else if (dyAttr !== null) {
+            const dy = parseFloat(dyAttr);
+            currentY += dyAttr.includes("em") ? dy * fontSize : dy;
           }
 
-          let hasLineOffset = false;
-          tspans.forEach((node) => {
-            const yVal  = parseFloat(node.getAttribute("y")  || "0");
-            const dyVal = parseFloat(node.getAttribute("dy") || "0");
-            const xVal  = parseFloat(node.getAttribute("x")  || "0");
-            if ((yVal !== 0 || dyVal !== 0) && xVal > 0) {
-              hasLineOffset = true;
-            }
-          });
-
-          // @ts-ignore
-          fabricObj.detectedTextAlign = hasLineOffset ? "center" : (fabricObj.textAlign || "left");
+          if (text.trim()) lines.push({ text, x: lineX, y: currentY });
         }
+      });
 
+      if (lines.length > 0) {
         // @ts-ignore
-        fabricObj.customLineHeight = calculatedLineHeight;
-
-        let constructedText = "";
-
-        children.forEach((node) => {
-          if (node.nodeType === 3) {
-            constructedText += node.textContent || "";
-          } else if (node.nodeType === 1 && node.nodeName === "tspan") {
-            const textContent = node.textContent || "";
-            const yVal  = parseFloat(node.getAttribute("y")  || "0");
-            const dyVal = parseFloat(node.getAttribute("dy") || "0");
-
-            if (yVal !== 0 || dyVal !== 0) {
-              constructedText += (constructedText.length > 0 ? "\n" : "") + textContent;
-            } else {
-              constructedText += textContent;
-            }
-          }
-        });
-
-        if (constructedText) {
-          // @ts-ignore
-          fabricObj.text = constructedText.trim();
-        }
+        fabricObj.customLines = lines;
+        // Keep text in sync for any fallback consumers
+        // @ts-ignore
+        fabricObj.text = lines.map((l) => l.text).join("\n");
       }
+
+      // @ts-ignore
+      fabricObj.detectedTextAlign = (fabricObj as any).textAlign || "left";
     }
   };
 
@@ -203,56 +186,65 @@ export const parseSVGToGroupNode = async (svgString: string): Promise<GroupNode>
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fixObjectsRecursive = (objs: any[]): any[] => {
-    return objs.map((obj) => {
+    return objs.flatMap((obj) => {
       if (obj.type === "group" && obj._objects) {
         obj._objects = fixObjectsRecursive(obj._objects);
-        return obj;
+        return [obj];
       }
 
       if (obj.type === "text" || obj.type === "i-text") {
         const p = obj.getPointByOrigin("left", "top");
         const rawFontFamily = obj.fontFamily || "";
         const rawFontWeight = obj.fontWeight;
-        const dynamicLineHeight = obj.customLineHeight || 1.16;
         const { family, weight } = getFontConfig(rawFontFamily, rawFontWeight);
 
         const hasFill   = obj.fill   && obj.fill   !== "none" && obj.fill   !== "";
         const hasStroke = obj.stroke && obj.stroke !== "none" && obj.stroke !== "";
-
-        const widthPadding = 20;
         const finalTextAlign = obj.detectedTextAlign || obj.textAlign || "left";
 
-        let adjustedLeft = p.x;
-        if (finalTextAlign === "center") {
-          adjustedLeft -= widthPadding / 2;
-        } else if (finalTextAlign === "right") {
-          adjustedLeft -= widthPadding;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const customLines = (obj as any).customLines as Array<{ text: string; x: number; y: number }> | undefined;
+
+        const makeTextbox = (text: string, left: number, top: number) =>
+          new fabric.Textbox(text, {
+            left,
+            top,
+            width: obj.width + 20,
+            fill:        hasFill   ? obj.fill   : "transparent",
+            stroke:      hasStroke ? obj.stroke : undefined,
+            strokeWidth: hasStroke ? (obj.strokeWidth ?? 0.5) : 0,
+            paintFirst:  hasStroke && !hasFill ? "fill" : "stroke",
+            fontSize:    obj.fontSize,
+            fontFamily:  family,
+            fontWeight:  weight,
+            charSpacing: obj.charSpacing,
+            textAlign:   finalTextAlign,
+            lineHeight:  1.16,
+            scaleX:      obj.scaleX,
+            scaleY:      obj.scaleY,
+            angle:       obj.angle,
+            originX:     "left",
+            originY:     "top",
+            splitByGrapheme: false,
+            editable:    true,
+          });
+
+        // Multi-line: one Textbox per tspan line, each at its exact x/y offset.
+        if (customLines && customLines.length > 1) {
+          return customLines.map(({ text, x, y }) => makeTextbox(text, p.x + x, p.y + y));
         }
 
-        return new fabric.Textbox(obj.text, {
-          left: p.x,
-          top: p.y,
-          width: obj.width + 20,
-          fill:        hasFill   ? obj.fill    : "transparent",
-          stroke:      hasStroke ? obj.stroke  : undefined,
-          strokeWidth: hasStroke ? (obj.strokeWidth ?? 0.5) : 0,
-          paintFirst:  hasStroke && !hasFill ? "fill" : "stroke",
-          fontSize: obj.fontSize,
-          fontFamily: family,
-          fontWeight: weight,
-          charSpacing: obj.charSpacing,
-          textAlign: obj.detectedTextAlign || obj.textAlign || "left",
-          lineHeight: dynamicLineHeight,
-          scaleX: obj.scaleX,
-          scaleY: obj.scaleY,
-          angle: obj.angle,
-          originX: "left",
-          originY: "top",
-          splitByGrapheme: false,
-          editable: true,
-        });
+        // Single line — keep original left-alignment adjustment
+        const widthPadding = 20;
+        let adjustedLeft = p.x;
+        if (finalTextAlign === "center") adjustedLeft -= widthPadding / 2;
+        else if (finalTextAlign === "right") adjustedLeft -= widthPadding;
+
+        const singleText = customLines?.[0]?.text ?? obj.text ?? " ";
+        return [makeTextbox(singleText, adjustedLeft, p.y)];
       }
-      return obj;
+
+      return [obj];
     });
   };
 
