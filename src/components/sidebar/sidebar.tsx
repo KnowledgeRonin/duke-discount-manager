@@ -1,7 +1,7 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
-import { SVG_LIBRARY } from "@/utils/library";
+import { SVG_LIBRARY } from "@/data/library";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Bold, Italic, BringToFront, SendToBack, ChevronUp, ChevronDown, Download } from "lucide-react";
-import { FabricThumbnail } from "@/utils/fabricThumbnail";
+import { FabricThumbnail } from "@/components/canvas/FabricThumbnail";
 import { useSelectedNode, useCanvasActions } from "@/lib/canvas";
 import type { SceneNode, TextNode } from "@/lib/canvas";
 

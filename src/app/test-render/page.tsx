@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import * as fabric from "fabric";
-import { SVG_LIBRARY } from "@/utils/library";
+import { SVG_LIBRARY } from "@/data/library";
 import { loadFromFabricJSON } from "@/lib/canvas/parser";
 import { CanvasRenderer } from "@/lib/canvas/CanvasRenderer";
 

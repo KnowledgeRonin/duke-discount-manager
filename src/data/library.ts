@@ -1,6 +1,6 @@
-import { VOUCHER_JSON_1 } from "@/mockData/json1";
-import { VOUCHER_JSON_2 } from "@/mockData/json2";
-import { VOUCHER_JSON_5 } from "@/mockData/json5";
+import { VOUCHER_JSON_1 } from "@/data/templates/json1";
+import { VOUCHER_JSON_2 } from "@/data/templates/json2";
+import { VOUCHER_JSON_5 } from "@/data/templates/json5";
 
 export type LibraryItem = {
   id: string;
