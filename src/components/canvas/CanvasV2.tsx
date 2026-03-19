@@ -6,6 +6,7 @@ import { useCanvasRenderer } from "@/lib/canvas/useCanvasRenderer";
 
 export interface CanvasV2Handle {
   exportImage: (options?: { format?: 'png' | 'jpeg'; multiplier?: number; quality?: number }) => void;
+  getThumbnailDataURL: () => string | null;
 }
 
 interface CanvasV2Props {
@@ -19,13 +20,13 @@ export const CanvasV2 = forwardRef<CanvasV2Handle, CanvasV2Props>(
 
     const { isOver, setNodeRef } = useDroppable({ id: "canvas-area" });
 
-    const { resize, exportImage } = useCanvasRenderer(canvasRef, {
+    const { resize, exportImage, getThumbnailDataURL } = useCanvasRenderer(canvasRef, {
       width: typeof window !== 'undefined' ? window.innerWidth - 320 : 800,
       height: typeof window !== 'undefined' ? window.innerHeight : 600,
       backgroundColor: "#F9FAFB"
     });
 
-    useImperativeHandle(ref, () => ({ exportImage }), [exportImage]);
+    useImperativeHandle(ref, () => ({ exportImage, getThumbnailDataURL }), [exportImage, getThumbnailDataURL]);
 
     useEffect(() => {
       if (!containerRef.current) return;

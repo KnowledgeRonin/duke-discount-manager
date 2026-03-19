@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCanvasRenderer, useCanvasStore, parseSVGToGroupNode } from "@/lib/canvas";
 import { SVG_LIBRARY } from "@/data/library";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase/client";
 
 export default function CanvasTestPage() {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -28,6 +29,19 @@ export default function CanvasTestPage() {
       });
     }
   }, [isInitialized, loadScene]);
+
+  const [dbStatus, setDbStatus] = useState<'idle' | 'ok' | 'error'>('idle');
+
+  const handleTestConnection = async () => {
+    const { data, error } = await supabase.from('templates').select('id').limit(1);
+    if (error) {
+      console.error('Supabase connection error:', error);
+      setDbStatus('error');
+    } else {
+      console.log('Supabase connected. Rows returned:', data);
+      setDbStatus('ok');
+    }
+  };
 
   const handleLoadSVG = async (svgString: string) => {
     try {
@@ -61,6 +75,18 @@ export default function CanvasTestPage() {
               Cargar {item.label}
             </Button>
           ))}
+          <Button
+            variant="outline"
+            className={
+              dbStatus === 'ok' ? 'border-green-500 text-green-600' :
+              dbStatus === 'error' ? 'border-red-500 text-red-600' : ''
+            }
+            onClick={handleTestConnection}
+          >
+            {dbStatus === 'ok' ? '✓ Supabase Connected' :
+             dbStatus === 'error' ? '✗ Connection Failed' :
+             'Test Supabase'}
+          </Button>
           <Button variant="destructive" onClick={clear}>Limpiar Canvas</Button>
           <Button 
             variant="default" 

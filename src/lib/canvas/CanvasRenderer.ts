@@ -699,6 +699,16 @@ export class CanvasRenderer {
   }
 
   /**
+   * Returns the canvas as a base64 data URL without triggering a download.
+   * Used internally for thumbnail generation before saving to the DB.
+   */
+  getThumbnailDataURL(multiplier = 1): string {
+    this.canvas.discardActiveObject()
+    this.canvas.renderAll()
+    return this.canvas.toDataURL({ format: 'png', multiplier, quality: 0.8 })
+  }
+
+  /**
    * Exports the canvas as a PNG or JPEG and triggers a browser download.
    * Deselects all active objects before capturing so handles don't appear.
    */

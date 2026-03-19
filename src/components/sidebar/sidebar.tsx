@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { SVG_LIBRARY } from "@/data/library";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -8,13 +9,19 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Bold, Italic, BringToFront, SendToBack, ChevronUp, ChevronDown, Download } from "lucide-react";
+import { ArrowLeft, Bold, Italic, BringToFront, SendToBack, ChevronUp, ChevronDown, Download, Save, Check, Loader2 } from "lucide-react";
 import { FabricThumbnail } from "@/components/canvas/FabricThumbnail";
 import { useSelectedNode, useCanvasActions } from "@/lib/canvas";
 import type { SceneNode, TextNode } from "@/lib/canvas";
 
 // --- MAIN SIDEBAR ---
-export function Sidebar({ onExport }: { onExport?: () => void }) {
+export function Sidebar({
+  onExport,
+  onSave,
+}: {
+  onExport?: () => void
+  onSave?: (name: string) => Promise<void>
+}) {
   const selectedNode = useSelectedNode();
   const { clearSelection, updateNodeProperty } = useCanvasActions();
 
@@ -26,6 +33,7 @@ export function Sidebar({ onExport }: { onExport?: () => void }) {
           onUpdateProperty={(property, value) => updateNodeProperty(selectedNode.id, property, value)}
           onBack={clearSelection}
           onExport={onExport}
+          onSave={onSave}
         />
       ) : (
         <TemplateLibrary />
@@ -65,12 +73,29 @@ function BlockEditor({
   onUpdateProperty,
   onBack,
   onExport,
+  onSave,
 }: {
   node: SceneNode;
   onUpdateProperty: (property: string, value: unknown) => void;
   onBack: () => void;
   onExport?: () => void;
+  onSave?: (name: string) => Promise<void>;
 }) {
+  const [templateName, setTemplateName] = useState('');
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
+
+  const handleSave = async () => {
+    if (!onSave || !templateName.trim()) return;
+    setSaveState('saving');
+    try {
+      await onSave(templateName.trim());
+      setSaveState('saved');
+      setTimeout(() => { setSaveState('idle'); setTemplateName(''); }, 2000);
+    } catch {
+      setSaveState('idle');
+    }
+  };
+
   const fillColorString = typeof node.fill === 'string'
     ? node.fill
     : ((node.fill as any)?.colorStops?.[0]?.color ?? '#000000');
@@ -125,6 +150,29 @@ function BlockEditor({
             <Download className="h-4 w-4" />
             Download PNG
           </Button>
+
+          {/* Save to DB */}
+          <div className="space-y-2">
+            <Label>Save Template</Label>
+            <Input
+              placeholder="Template name..."
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+              disabled={saveState === 'saving'}
+            />
+            <Button
+              className="w-full gap-2"
+              variant="secondary"
+              onClick={handleSave}
+              disabled={!templateName.trim() || saveState === 'saving' || !onSave}
+            >
+              {saveState === 'saving' && <Loader2 className="h-4 w-4 animate-spin" />}
+              {saveState === 'saved' && <Check className="h-4 w-4" />}
+              {saveState === 'idle' && <Save className="h-4 w-4" />}
+              {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved!' : 'Save'}
+            </Button>
+          </div>
         </div>
       </ScrollArea>
     </div>
