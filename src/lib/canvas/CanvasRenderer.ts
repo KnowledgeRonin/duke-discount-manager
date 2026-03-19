@@ -519,6 +519,7 @@ export class CanvasRenderer {
 
       this.emit('node:modified', id, changes)
     })
+
   }
 
   /**
