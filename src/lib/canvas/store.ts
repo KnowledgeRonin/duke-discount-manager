@@ -1,7 +1,18 @@
 import { create } from 'zustand'
-import { devtools, persist } from 'zustand/middleware'
+import { devtools, persist, createJSONStorage } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import { useShallow } from 'zustand/react/shallow'
+
+// Debounced localStorage — prevents writing on every live (color picker drag) update
+let _persistTimer: ReturnType<typeof setTimeout> | null = null
+const debouncedStorage = createJSONStorage(() => ({
+  getItem: (key: string) => localStorage.getItem(key),
+  setItem: (key: string, value: string) => {
+    if (_persistTimer) clearTimeout(_persistTimer)
+    _persistTimer = setTimeout(() => localStorage.setItem(key, value), 400)
+  },
+  removeItem: (key: string) => localStorage.removeItem(key),
+}))
 
 import type {
   SceneNode,
@@ -743,6 +754,7 @@ export const useCanvasStore = create<CanvasStore>()(
       })),
       {
         name: 'canvas-storage',
+        storage: debouncedStorage,
         // Only persist the root tree, not transient state like selection or index
         partialize: (state) => ({ root: state.root }),
         // Rebuild the node index after rehydration — it is not persisted
@@ -791,6 +803,7 @@ export function useNodeProperty<T>(
 export function useCanvasActions() {
   return useCanvasStore(useShallow((state) => ({
     updateNodeProperty: state.updateNodeProperty,
+    updateNodePropertyLive: state.updateNodePropertyLive,
     updateMultipleProperties: state.updateMultipleProperties,
     deleteNode: state.deleteNode,
     addNode: state.addNode,
