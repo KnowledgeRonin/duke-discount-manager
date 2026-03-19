@@ -12,6 +12,7 @@ import { SVG_LIBRARY } from "@/data/library";
 import { FabricThumbnail } from "@/components/canvas/FabricThumbnail";
 import { saveTemplate } from "@/lib/supabase/templates";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 
 export function Editor() {
   const router = useRouter();
@@ -161,7 +162,13 @@ export function Editor() {
             const root = useCanvasStore.getState().root;
             if (!root) throw new Error('Canvas is empty');
             const thumbnail = canvasV2Ref.current?.getThumbnailDataURL() ?? null;
-            await saveTemplate(name, root, thumbnail);
+            try {
+              await saveTemplate(name, root, thumbnail);
+              toast.success('Template saved!');
+            } catch (err) {
+              toast.error('Failed to save template. Check your connection and try again.');
+              throw err;
+            }
           }}
         />
       </main>
