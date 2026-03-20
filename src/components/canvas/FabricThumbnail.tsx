@@ -69,6 +69,7 @@ export function FabricThumbnail({ jsonData }: FabricThumbnailProps) {
       if (isArray || isFabricObject) {
         const objectsToLoad = isArray ? jsonData : [jsonData];
 
+                             // @ts-ignore: Fabric.js types are outdated relative to the current version. This will be changed later     
         const enlivenResult = fabric.util.enlivenObjects(objectsToLoad, (enlivenedObjects: any[]) => {
           renderAndExport(enlivenedObjects);
         });
