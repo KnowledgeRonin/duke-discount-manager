@@ -1,5 +1,5 @@
 import { loadFromFabricJSON } from '../src/lib/canvas/parser';
-import { SVG_LIBRARY } from '../src/utils/library';
+import { SVG_LIBRARY } from '../src/data/library';
 
 const testItem = SVG_LIBRARY[0];
 if (testItem.type === 'JSON' && testItem.canvasData) {
