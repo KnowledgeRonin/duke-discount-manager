@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Bold, Italic, BringToFront, SendToBack, ChevronUp, ChevronDown, Download, Save, Check, Loader2, Trash2 } from "lucide-react";
 import { FabricThumbnail } from "@/components/canvas/FabricThumbnail";
 import { useSelectedNode, useCanvasActions } from "@/lib/canvas";
+import { useCanvasStore } from "@/lib/canvas/store";
 import type { SceneNode, TextNode } from "@/lib/canvas";
 
 // --- MAIN SIDEBAR ---
@@ -27,9 +28,16 @@ export function Sidebar({
   onSaveAs?: (name: string) => Promise<void>
 }) {
   const selectedNode = useSelectedNode();
-  const { clearSelection, updateNodeProperty, updateNodePropertyLive, commitLiveUpdate } = useCanvasActions();
+  const { clearSelection, updateNodeProperty, updateNodePropertyLive, commitLiveUpdate, selectNode } = useCanvasActions();
+  const root = useCanvasStore((state) => state.root);
 
   const isEditingTemplate = !!defaultTemplateName;
+
+  useEffect(() => {
+    if (isEditingTemplate && !selectedNode && root?.objects?.[0]) {
+      selectNode(root.objects[0].id);
+    }
+  }, [isEditingTemplate, selectedNode, root, selectNode]);
 
   return (
     <div className="h-full border-l bg-background flex flex-col w-80 shadow-sm z-10">
@@ -45,10 +53,6 @@ export function Sidebar({
           onSave={onSave}
           onSaveAs={onSaveAs}
         />
-      ) : isEditingTemplate ? (
-        <div className="flex flex-col h-full items-center justify-center gap-2 text-center px-6">
-          <p className="text-sm font-medium text-muted-foreground">Click an element on the canvas to edit it</p>
-        </div>
       ) : (
         <TemplateLibrary />
       )}
