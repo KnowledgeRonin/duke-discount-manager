@@ -33,10 +33,6 @@ export function Editor({ templateId, templateName }: { templateId?: string; temp
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
-  const handleResetCanvas = () => {
-    loadScene({ version: '7.0.0', objects: [] });
-  };
-
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id);
   };
@@ -145,12 +141,6 @@ export function Editor({ templateId, templateName }: { templateId?: string; temp
             >
               <ArrowLeft className="h-4 w-4" />
               Dashboard
-            </button>
-            <button
-              onClick={handleResetCanvas}
-              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded shadow-lg transition-colors"
-            >
-              Clear all
             </button>
           </div>
         </div>

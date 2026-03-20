@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Bold, Italic, BringToFront, SendToBack, ChevronUp, ChevronDown, Download, Save, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Bold, Italic, BringToFront, SendToBack, ChevronUp, ChevronDown, Download, Save, Check, Loader2, Trash2 } from "lucide-react";
 import { FabricThumbnail } from "@/components/canvas/FabricThumbnail";
 import { useSelectedNode, useCanvasActions } from "@/lib/canvas";
 import type { SceneNode, TextNode } from "@/lib/canvas";
@@ -49,6 +49,14 @@ export function Sidebar({
 
 // --- LIBRARY VIEW ---
 function TemplateLibrary() {
+  const { clear } = useCanvasActions();
+  const [confirming, setConfirming] = useState(false);
+
+  const handleClear = () => {
+    clear();
+    setConfirming(false);
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 pb-2">
@@ -68,6 +76,26 @@ function TemplateLibrary() {
           ))}
         </div>
       </ScrollArea>
+
+      <div className="p-3 border-t">
+        {confirming ? (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground flex-1">Are you sure?</span>
+            <Button variant="destructive" size="sm" onClick={handleClear}>Yes</Button>
+            <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>No</Button>
+          </div>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full gap-2 text-muted-foreground hover:text-destructive"
+            onClick={() => setConfirming(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+            Clear canvas
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
