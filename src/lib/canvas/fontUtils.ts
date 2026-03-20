@@ -6,9 +6,14 @@ export function extractFontsFromFabricJSON(json: any): string[] {
     objects.forEach((obj) => {
       // 1. If the object has a fontFamily, collect it
       if (obj.fontFamily) {
-        // Light cleanup just in case (e.g. "Poppins" vs "Poppins-Bold")
-        // Assumes the font name is already clean (e.g. "Poppins")
-        fonts.add(obj.fontFamily);
+        // Take the first font in a comma-separated stack and strip weight suffixes
+        // e.g. "Poppins Regular, Poppins" → "Poppins"
+        const normalized = obj.fontFamily
+          .split(',')[0]
+          .trim()
+          .replace(/\s+(Regular|Bold|Italic|Light|Medium|SemiBold|ExtraBold|Black|Thin|Heavy)$/i, '')
+          .trim();
+        fonts.add(normalized);
       }
 
       // 2. If it's a group, recurse into its children
