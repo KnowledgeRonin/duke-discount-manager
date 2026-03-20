@@ -520,6 +520,19 @@ export class CanvasRenderer {
       this.emit('node:modified', id, changes)
     })
 
+    // Text editing exited — sync the edited text content back to the store
+    this.canvas.on('text:editing:exited', (e) => {
+      if (this._isSyncing) return
+
+      const target = e.target
+      if (!target || !(target instanceof fabric.Textbox)) return
+
+      const id = this.resolveNodeId(target)
+      if (!id) return
+
+      this.emit('node:modified', id, { text: target.text } as Partial<SceneNode>)
+    })
+
   }
 
   /**
