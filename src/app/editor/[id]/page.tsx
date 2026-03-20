@@ -17,7 +17,7 @@ export default function EditorTemplatePage() {
   useEffect(() => {
     getTemplate(id)
       .then((template) => {
-        loadScene({ version: '7.0.0', objects: [template.scene_graph] });
+        loadScene(template.scene_graph);
         setReady(true);
       })
       .catch(() => {
