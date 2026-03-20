@@ -69,6 +69,7 @@ export function useCanvasRenderer(
       if (changes.scaleX !== undefined) safeChanges.scaleX = changes.scaleX
       if (changes.scaleY !== undefined) safeChanges.scaleY = changes.scaleY
       if (changes.angle !== undefined) safeChanges.angle = changes.angle
+      if ('text' in changes && changes.text !== undefined) safeChanges.text = changes.text
 
       if (Object.keys(safeChanges).length > 0) {
         fromFabricEventRef.current = true
