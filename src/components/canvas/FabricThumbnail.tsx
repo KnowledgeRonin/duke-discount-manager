@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import * as fabric from "fabric"; 
+import * as fabric from "fabric";
 import { Skeleton } from "@/components/ui/skeleton";
 import { extractFontsFromFabricJSON } from "@/lib/canvas/fontUtils";
 import { loadGoogleFonts } from "@/lib/canvas/fontLoader";
@@ -13,10 +13,10 @@ export function FabricThumbnail({ jsonData }: FabricThumbnailProps) {
 
   useEffect(() => {
     if (!jsonData) return;
-    
-    // Flag para evitar Race Conditions si el componente se desmonta 
-    // o el jsonData cambia rápidamente antes de que termine el render
-    let isCancelled = false; 
+
+    // Flag to prevent race conditions if the component unmounts
+    // or jsonData changes rapidly before the render completes
+    let isCancelled = false;
 
     const canvasEl = document.createElement('canvas');
     const offscreenCanvas = new fabric.StaticCanvas(canvasEl);
@@ -28,31 +28,31 @@ export function FabricThumbnail({ jsonData }: FabricThumbnailProps) {
 
       const mainElement = objects.length === 1 ? objects[0] : new fabric.Group(objects);
       offscreenCanvas.add(mainElement);
-      
-      mainElement.setCoords(); // Actualiza medidas
 
-      // Medimos el cuadro delimitador (bounding box) real
+      mainElement.setCoords(); // Update bounding coordinates
+
+      // Measure the actual bounding box
       const br = mainElement.getBoundingRect();
 
-      // Magia pura: toDataURL nos permite exportar SOLO el área que ocupa el objeto,
-      // ignorando el resto del canvas. Le damos un multiplier de 2 para que sea HD.
+      // toDataURL lets us export ONLY the area occupied by the object,
+      // ignoring the rest of the canvas. A multiplier of 2 makes it HD.
       const dataUrl = offscreenCanvas.toDataURL({
         format: 'png',
         left: br.left,
         top: br.top,
         width: br.width,
         height: br.height,
-        multiplier: 2 // Genera una imagen al doble de resolución (nítida al hacer scale)
+        multiplier: 2 // Renders at double resolution (stays sharp when scaled down)
       });
 
       if (!isCancelled) {
         setImageSrc(dataUrl);
       }
-      
+
       offscreenCanvas.dispose();
     };
 
-    // --- CARGAR FUENTES ANTES DE RENDERIZAR ---
+    // --- LOAD FONTS BEFORE RENDERING ---
     const fonts = extractFontsFromFabricJSON(jsonData);
 
     const doRender = async () => {
@@ -62,13 +62,13 @@ export function FabricThumbnail({ jsonData }: FabricThumbnailProps) {
       }
       if (isCancelled) return;
 
-      // --- DETECCIÓN INTELIGENTE DE FORMATO ---
+      // --- SMART FORMAT DETECTION ---
       const isFabricObject = jsonData && typeof jsonData.type === 'string' && jsonData.type !== 'canvas';
       const isArray = Array.isArray(jsonData);
 
       if (isArray || isFabricObject) {
         const objectsToLoad = isArray ? jsonData : [jsonData];
-        
+
         const enlivenResult = fabric.util.enlivenObjects(objectsToLoad, (enlivenedObjects: any[]) => {
           renderAndExport(enlivenedObjects);
         });
@@ -85,7 +85,7 @@ export function FabricThumbnail({ jsonData }: FabricThumbnailProps) {
 
     doRender();
 
-    // Cleanup function: cancela la actualización de estado si el componente se desmonta
+    // Cleanup function: cancels state updates if the component unmounts
     return () => {
       isCancelled = true;
       offscreenCanvas.dispose();
@@ -93,17 +93,17 @@ export function FabricThumbnail({ jsonData }: FabricThumbnailProps) {
   }, [jsonData]);
 
   if (!imageSrc) {
-    return <Skeleton className="w-full h-full rounded-md" />; 
+    return <Skeleton className="w-full h-full rounded-md" />;
   }
 
   return (
-    // El wrapper flex se asegura de centrarlo y darle el área completa
+    // The flex wrapper centers the image and gives it the full available area
     <div className="w-full h-full flex items-center justify-center">
-      <img 
-        src={imageSrc} 
-        alt="Template thumbnail" 
-        // 👇 Aquí está la magia responsiva al 80%
-        className="w-[80%] object-contain drop-shadow-sm pointer-events-none" 
+      <img
+        src={imageSrc}
+        alt="Template thumbnail"
+        // Responsive sizing at 80% of the container
+        className="w-[80%] object-contain drop-shadow-sm pointer-events-none"
       />
     </div>
   );

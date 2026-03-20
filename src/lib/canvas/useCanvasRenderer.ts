@@ -6,7 +6,7 @@ import { useCanvasStore } from './store'
 import type { SceneNode } from './types'
 
 /**
- * React hook that bridges the Zustand store ↔ CanvasRenderer.
+ * React hook that bridges the Zustand store <-> CanvasRenderer.
  *
  * Responsibilities:
  * 1. Creates and manages the CanvasRenderer lifecycle.

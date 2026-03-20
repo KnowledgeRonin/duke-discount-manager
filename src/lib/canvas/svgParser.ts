@@ -72,14 +72,14 @@ export const collapseTspans = (svgString: string): string => {
   doc.querySelectorAll("text").forEach((textEl) => {
     const allTspans = Array.from(textEl.querySelectorAll("tspan"));
 
-    // ✅ Solo tspans hoja (sin descendientes tspan)
+    // Leaf tspans only (no descendant tspans)
     const leafTspans = allTspans.filter(
       (ts) => ts.querySelectorAll("tspan").length === 0
     );
 
     if (leafTspans.length === 0) return;
 
-    // Agrupar por Y efectivo (subir el árbol hasta encontrar el atributo y)
+    // Group by effective Y (walk up the tree to find the y attribute)
     const lines = new Map<number, Element[]>();
     leafTspans.forEach((ts) => {
       let effectiveY = 0;
@@ -96,10 +96,10 @@ export const collapseTspans = (svgString: string): string => {
       lines.get(effectiveY)!.push(ts);
     });
 
-    // Eliminar todos los tspans (los wrapper también) — los nodos de texto directo se conservan
+    // Remove all tspans (wrappers included) — direct text nodes are preserved
     allTspans.forEach((ts) => ts.remove());
 
-    // Reconstruir: un tspan por línea
+    // Rebuild: one tspan per line
     const sortedYs = Array.from(lines.keys()).sort((a, b) => a - b);
     sortedYs.forEach((y) => {
       const group = lines.get(y)!;

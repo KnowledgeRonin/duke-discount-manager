@@ -1,31 +1,31 @@
 export function extractFontsFromFabricJSON(json: any): string[] {
   const fonts = new Set<string>();
 
-  // Función recursiva para buscar en profundidad
+  // Recursive function to search in depth
   const traverse = (objects: any[]) => {
     objects.forEach((obj) => {
-      // 1. Si tiene fontFamily, lo guardamos
+      // 1. If the object has a fontFamily, collect it
       if (obj.fontFamily) {
-        // Limpiamos un poco por si acaso (ej: "Poppins" vs "Poppins-Bold")
-        // Asumimos que tu Sanitizer ya dejó el nombre limpio como "Poppins"
+        // Light cleanup just in case (e.g. "Poppins" vs "Poppins-Bold")
+        // Assumes the font name is already clean (e.g. "Poppins")
         fonts.add(obj.fontFamily);
       }
 
-      // 2. Si es un grupo, buscamos en sus hijos
+      // 2. If it's a group, recurse into its children
       if (obj.type === 'group' && Array.isArray(obj.objects)) {
         traverse(obj.objects);
       }
     });
   };
 
-  // Fabric JSON suele tener la estructura { version: "...", objects: [...] }
-  // O a veces es solo el array de objetos si lo guardaste así.
+  // Fabric JSON usually has the shape { version: "...", objects: [...] }
+  // Sometimes it's just the objects array if saved that way.
   const rootObjects = Array.isArray(json) ? json : (json.objects || []);
-  
+
   traverse(rootObjects);
 
-  // Convertimos el Set a Array y filtramos fuentes del sistema que no necesitan descarga
+  // Convert the Set to an array and filter out system fonts that don't need downloading
   const systemFonts = ['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'sans-serif', 'serif'];
-  
+
   return Array.from(fonts).filter(f => !systemFonts.includes(f));
 }
