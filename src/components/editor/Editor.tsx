@@ -166,6 +166,18 @@ export function Editor({ templateId, templateName }: { templateId?: string; temp
               throw err;
             }
           }}
+          onSaveAs={async (name) => {
+            const root = useCanvasStore.getState().root;
+            if (!root) throw new Error('Canvas is empty');
+            const thumbnail = canvasV2Ref.current?.getThumbnailDataURL() ?? null;
+            try {
+              await saveTemplate(name, root, thumbnail);
+              toast.success('Template saved!');
+            } catch (err) {
+              toast.error('Failed to save template. Check your connection and try again.');
+              throw err;
+            }
+          }}
         />
       </main>
 
