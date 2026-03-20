@@ -11,6 +11,7 @@ export default function EditorTemplatePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const loadScene = useCanvasStore((state) => state.loadScene);
+  const selectNode = useCanvasStore((state) => state.selectNode);
   const [templateMeta, setTemplateMeta] = useState<{ name: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,6 +19,8 @@ export default function EditorTemplatePage() {
     getTemplate(id)
       .then((template) => {
         loadScene(template.scene_graph);
+        const firstChild = template.scene_graph?.objects?.[0];
+        if (firstChild?.id) selectNode(firstChild.id);
         setTemplateMeta({ name: template.name });
       })
       .catch(() => {

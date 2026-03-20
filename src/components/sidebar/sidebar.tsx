@@ -27,6 +27,8 @@ export function Sidebar({
   const selectedNode = useSelectedNode();
   const { clearSelection, updateNodeProperty, updateNodePropertyLive, commitLiveUpdate } = useCanvasActions();
 
+  const isEditingTemplate = !!defaultTemplateName;
+
   return (
     <div className="h-full border-l bg-background flex flex-col w-80 shadow-sm z-10">
       {selectedNode ? (
@@ -36,10 +38,14 @@ export function Sidebar({
           onUpdatePropertyLive={(property, value) => updateNodePropertyLive(selectedNode.id, property, value)}
           onCommitLiveUpdate={commitLiveUpdate}
           defaultTemplateName={defaultTemplateName}
-          onBack={clearSelection}
+          onBack={isEditingTemplate ? undefined : clearSelection}
           onExport={onExport}
           onSave={onSave}
         />
+      ) : isEditingTemplate ? (
+        <div className="flex flex-col h-full items-center justify-center gap-2 text-center px-6">
+          <p className="text-sm font-medium text-muted-foreground">Click an element on the canvas to edit it</p>
+        </div>
       ) : (
         <TemplateLibrary />
       )}
@@ -116,7 +122,7 @@ function BlockEditor({
   onUpdatePropertyLive: (property: string, value: unknown) => void;
   onCommitLiveUpdate: () => void;
   defaultTemplateName?: string;
-  onBack: () => void;
+  onBack?: () => void;
   onExport?: () => void;
   onSave?: (name: string) => Promise<void>;
 }) {
@@ -154,9 +160,11 @@ function BlockEditor({
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b flex items-center gap-2 bg-muted/30">
-        <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8">
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+        {onBack && (
+          <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        )}
         <div>
           <h3 className="font-semibold text-sm">Edit {node.type}</h3>
           <p className="text-xs text-muted-foreground text-ellipsis overflow-hidden w-40">
