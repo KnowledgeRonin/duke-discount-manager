@@ -8,8 +8,8 @@ import { useCanvasStore } from "@/lib/canvas/store";
 import { parseSVGToGroupNode } from "@/lib/canvas/svgParser";
 import { loadFromFabricJSON } from "@/lib/canvas/parser";
 
-import { SVG_LIBRARY } from "@/utils/library";
-import { FabricThumbnail } from "@/utils/fabricThumbnail";
+import { SVG_LIBRARY } from "@/data/library";
+import { FabricThumbnail } from "@/components/canvas/FabricThumbnail";
 
 export default function Home() {
   const loadScene = useCanvasStore((state) => state.loadScene);

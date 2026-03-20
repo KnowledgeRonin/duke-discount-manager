@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useCanvasRenderer, useCanvasStore, parseSVGToGroupNode } from "@/lib/canvas";
-import { SVG_LIBRARY } from "@/utils/library";
+import { SVG_LIBRARY } from "@/data/library";
 import { Button } from "@/components/ui/button";
 
 export default function CanvasTestPage() {

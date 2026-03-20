@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import * as fabric from "fabric"; 
 import { Skeleton } from "@/components/ui/skeleton";
-import { extractFontsFromFabricJSON } from "@/utils/fontUtils";
-import { loadGoogleFonts } from "@/utils/fontLoader";
+import { extractFontsFromFabricJSON } from "@/lib/canvas/fontUtils";
+import { loadGoogleFonts } from "@/lib/canvas/fontLoader";
 
 interface FabricThumbnailProps {
   jsonData: any;
