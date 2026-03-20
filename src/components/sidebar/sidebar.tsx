@@ -84,7 +84,7 @@ function TemplateLibrary() {
 
       <Separator className="my-2" />
 
-      <ScrollArea className="flex-1 px-4">
+      <ScrollArea className="flex-1 min-h-0 px-4">
         <div className="grid gap-3 pb-4">
           {SVG_LIBRARY.map((item) => (
             <DraggableSidebarItem
@@ -190,8 +190,8 @@ function BlockEditor({
         </div>
       </div>
 
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-6">
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="space-y-6 p-4">
           {/* Text Formatting — only for textbox nodes */}
           {node.type === 'textbox' && (
             <TextFormattingPanel node={node as TextNode} onUpdateProperty={onUpdateProperty} />
