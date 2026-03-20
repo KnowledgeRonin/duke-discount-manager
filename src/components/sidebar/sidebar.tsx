@@ -340,21 +340,37 @@ function TextFormattingPanel({
     <div className="space-y-3">
       <Label>Text</Label>
 
-      {/* Font Size */}
-      <div className="space-y-1">
-        <Label htmlFor="font-size" className="text-xs text-muted-foreground">Font Size</Label>
-        <Input
-          id="font-size"
-          type="number"
-          min={1}
-          max={500}
-          value={node.fontSize}
-          onChange={(e) => {
-            const val = Number(e.target.value);
-            if (val >= 1 && val <= 500) onUpdateProperty('fontSize', val);
-          }}
-          className="w-24"
-        />
+      {/* Font Size + Width */}
+      <div className="flex gap-3">
+        <div className="space-y-1">
+          <Label htmlFor="font-size" className="text-xs text-muted-foreground">Font Size</Label>
+          <Input
+            id="font-size"
+            type="number"
+            min={1}
+            max={500}
+            value={node.fontSize}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              if (val >= 1 && val <= 500) onUpdateProperty('fontSize', val);
+            }}
+            className="w-24"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="text-width" className="text-xs text-muted-foreground">Width</Label>
+          <Input
+            id="text-width"
+            type="number"
+            min={1}
+            value={Math.round(node.width)}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              if (val >= 1) onUpdateProperty('width', val);
+            }}
+            className="w-24"
+          />
+        </div>
       </div>
 
       {/* Style toggles */}
