@@ -11,14 +11,14 @@ export default function EditorTemplatePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const loadScene = useCanvasStore((state) => state.loadScene);
-  const [ready, setReady] = useState(false);
+  const [templateMeta, setTemplateMeta] = useState<{ name: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     getTemplate(id)
       .then((template) => {
         loadScene(template.scene_graph);
-        setReady(true);
+        setTemplateMeta({ name: template.name });
       })
       .catch(() => {
         setError('Template not found.');
@@ -39,7 +39,7 @@ export default function EditorTemplatePage() {
     );
   }
 
-  if (!ready) {
+  if (!templateMeta) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -47,5 +47,5 @@ export default function EditorTemplatePage() {
     );
   }
 
-  return <Editor />;
+  return <Editor templateId={id} templateName={templateMeta.name} />;
 }

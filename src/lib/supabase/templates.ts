@@ -74,6 +74,36 @@ export async function saveTemplate(
 }
 
 /**
+ * Updates an existing template in the database.
+ */
+export async function updateTemplate(
+  id: string,
+  name: string,
+  sceneGraph: GroupNode,
+  thumbnailDataURL: string | null
+): Promise<SavedTemplate> {
+  const thumbnail = thumbnailDataURL
+    ? await uploadThumbnail(thumbnailDataURL, name)
+    : null
+
+  const body: Record<string, unknown> = { name, scene_graph: sceneGraph }
+  if (thumbnail) body.thumbnail = thumbnail
+
+  const response = await fetch(`/api/templates/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+
+  if (!response.ok) {
+    const err = await response.json()
+    throw new Error(err.error ?? 'Failed to update template')
+  }
+
+  return response.json()
+}
+
+/**
  * Fetches all templates (without scene_graph) for the dashboard.
  */
 export async function getTemplates(): Promise<SavedTemplate[]> {

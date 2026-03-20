@@ -16,9 +16,11 @@ import type { SceneNode, TextNode } from "@/lib/canvas";
 
 // --- MAIN SIDEBAR ---
 export function Sidebar({
+  defaultTemplateName,
   onExport,
   onSave,
 }: {
+  defaultTemplateName?: string
   onExport?: () => void
   onSave?: (name: string) => Promise<void>
 }) {
@@ -33,6 +35,7 @@ export function Sidebar({
           onUpdateProperty={(property, value) => updateNodeProperty(selectedNode.id, property, value)}
           onUpdatePropertyLive={(property, value) => updateNodePropertyLive(selectedNode.id, property, value)}
           onCommitLiveUpdate={commitLiveUpdate}
+          defaultTemplateName={defaultTemplateName}
           onBack={clearSelection}
           onExport={onExport}
           onSave={onSave}
@@ -75,6 +78,7 @@ function BlockEditor({
   onUpdateProperty,
   onUpdatePropertyLive,
   onCommitLiveUpdate,
+  defaultTemplateName,
   onBack,
   onExport,
   onSave,
@@ -83,11 +87,13 @@ function BlockEditor({
   onUpdateProperty: (property: string, value: unknown) => void;
   onUpdatePropertyLive: (property: string, value: unknown) => void;
   onCommitLiveUpdate: () => void;
+  defaultTemplateName?: string;
   onBack: () => void;
   onExport?: () => void;
   onSave?: (name: string) => Promise<void>;
 }) {
-  const [templateName, setTemplateName] = useState('');
+  const isUpdate = !!defaultTemplateName;
+  const [templateName, setTemplateName] = useState(defaultTemplateName ?? '');
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
   const colorInputRef = useRef<HTMLInputElement>(null);
 
@@ -171,7 +177,7 @@ function BlockEditor({
 
           {/* Save to DB */}
           <div className="space-y-2">
-            <Label>Save Template</Label>
+            <Label>{isUpdate ? 'Update Template' : 'Save Template'}</Label>
             <Input
               placeholder="Template name..."
               value={templateName}
@@ -188,7 +194,7 @@ function BlockEditor({
               {saveState === 'saving' && <Loader2 className="h-4 w-4 animate-spin" />}
               {saveState === 'saved' && <Check className="h-4 w-4" />}
               {saveState === 'idle' && <Save className="h-4 w-4" />}
-              {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved!' : 'Save'}
+              {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved!' : isUpdate ? 'Update' : 'Save'}
             </Button>
           </div>
         </div>

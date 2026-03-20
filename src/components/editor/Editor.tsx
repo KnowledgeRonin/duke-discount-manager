@@ -10,11 +10,11 @@ import { parseSVGToGroupNode } from "@/lib/canvas/svgParser";
 import { loadFromFabricJSON } from "@/lib/canvas/parser";
 import { SVG_LIBRARY } from "@/data/library";
 import { FabricThumbnail } from "@/components/canvas/FabricThumbnail";
-import { saveTemplate } from "@/lib/supabase/templates";
+import { saveTemplate, updateTemplate } from "@/lib/supabase/templates";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
-export function Editor() {
+export function Editor({ templateId, templateName }: { templateId?: string; templateName?: string } = {}) {
   const router = useRouter();
   const loadScene = useCanvasStore((state) => state.loadScene);
   const selectNode = useCanvasStore((state) => state.selectNode);
@@ -157,14 +157,20 @@ export function Editor() {
 
         {/* Sidebar */}
         <Sidebar
+          defaultTemplateName={templateName}
           onExport={() => canvasV2Ref.current?.exportImage()}
           onSave={async (name) => {
             const root = useCanvasStore.getState().root;
             if (!root) throw new Error('Canvas is empty');
             const thumbnail = canvasV2Ref.current?.getThumbnailDataURL() ?? null;
             try {
-              await saveTemplate(name, root, thumbnail);
-              toast.success('Template saved!');
+              if (templateId) {
+                await updateTemplate(templateId, name, root, thumbnail);
+                toast.success('Template updated!');
+              } else {
+                await saveTemplate(name, root, thumbnail);
+                toast.success('Template saved!');
+              }
             } catch (err) {
               toast.error('Failed to save template. Check your connection and try again.');
               throw err;
