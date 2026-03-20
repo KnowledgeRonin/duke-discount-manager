@@ -190,7 +190,7 @@ function BlockEditor({
         )}
         <div>
           <h3 className="font-semibold text-sm">Edit {node.type}</h3>
-          <p className="text-xs text-muted-foreground text-ellipsis overflow-hidden w-40">
+          <p className="text-xs text-muted-foreground text-ellipsis overflow-hidden w-50">
             ID: {node.id}
           </p>
         </div>
