@@ -19,10 +19,12 @@ export function Sidebar({
   defaultTemplateName,
   onExport,
   onSave,
+  onSaveAs,
 }: {
   defaultTemplateName?: string
   onExport?: () => void
   onSave?: (name: string) => Promise<void>
+  onSaveAs?: (name: string) => Promise<void>
 }) {
   const selectedNode = useSelectedNode();
   const { clearSelection, updateNodeProperty, updateNodePropertyLive, commitLiveUpdate } = useCanvasActions();
@@ -41,6 +43,7 @@ export function Sidebar({
           onBack={isEditingTemplate ? undefined : clearSelection}
           onExport={onExport}
           onSave={onSave}
+          onSaveAs={onSaveAs}
         />
       ) : isEditingTemplate ? (
         <div className="flex flex-col h-full items-center justify-center gap-2 text-center px-6">
@@ -116,6 +119,7 @@ function BlockEditor({
   onBack,
   onExport,
   onSave,
+  onSaveAs,
 }: {
   node: SceneNode;
   onUpdateProperty: (property: string, value: unknown) => void;
@@ -125,10 +129,13 @@ function BlockEditor({
   onBack?: () => void;
   onExport?: () => void;
   onSave?: (name: string) => Promise<void>;
+  onSaveAs?: (name: string) => Promise<void>;
 }) {
   const isUpdate = !!defaultTemplateName;
   const [templateName, setTemplateName] = useState(defaultTemplateName ?? '');
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [saveAsName, setSaveAsName] = useState('');
+  const [saveAsState, setSaveAsState] = useState<'idle' | 'saving' | 'saved'>('idle');
   const colorInputRef = useRef<HTMLInputElement>(null);
 
   // Listen for the native 'change' event (fires when the picker closes)
@@ -150,6 +157,18 @@ function BlockEditor({
       setTimeout(() => { setSaveState('idle'); setTemplateName(''); }, 2000);
     } catch {
       setSaveState('idle');
+    }
+  };
+
+  const handleSaveAs = async () => {
+    if (!onSaveAs || !saveAsName.trim()) return;
+    setSaveAsState('saving');
+    try {
+      await onSaveAs(saveAsName.trim());
+      setSaveAsState('saved');
+      setTimeout(() => { setSaveAsState('idle'); setSaveAsName(''); }, 2000);
+    } catch {
+      setSaveAsState('idle');
     }
   };
 
@@ -233,6 +252,32 @@ function BlockEditor({
               {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved!' : isUpdate ? 'Update' : 'Save'}
             </Button>
           </div>
+
+          {/* Save As — only when editing an existing template */}
+          {isUpdate && onSaveAs && (
+            <div className="space-y-2">
+              <Separator />
+              <Label>Save as New Template</Label>
+              <Input
+                placeholder="New template name..."
+                value={saveAsName}
+                onChange={(e) => setSaveAsName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveAs()}
+                disabled={saveAsState === 'saving'}
+              />
+              <Button
+                className="w-full gap-2"
+                variant="outline"
+                onClick={handleSaveAs}
+                disabled={!saveAsName.trim() || saveAsState === 'saving'}
+              >
+                {saveAsState === 'saving' && <Loader2 className="h-4 w-4 animate-spin" />}
+                {saveAsState === 'saved' && <Check className="h-4 w-4" />}
+                {saveAsState === 'idle' && <Save className="h-4 w-4" />}
+                {saveAsState === 'saving' ? 'Saving...' : saveAsState === 'saved' ? 'Saved!' : 'Save as New'}
+              </Button>
+            </div>
+          )}
         </div>
       </ScrollArea>
     </div>
