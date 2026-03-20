@@ -9,11 +9,11 @@ import { supabase } from "@/lib/supabase/client";
 export default function CanvasTestPage() {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
 
-  // 1. Inicializamos el renderizador en el contenedor HTML
+  // 1. Initialize the renderer in the HTML container
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useCanvasRenderer(canvasRef);
   
-  // 2. Traemos las acciones del store para modificar el estado
+  // 2. Pull store actions to modify state
   const addNode = useCanvasStore((state) => state.addNode);
   const clear = useCanvasStore((state) => state.clear);
   const loadScene = useCanvasStore((state) => state.loadScene);
@@ -45,10 +45,10 @@ export default function CanvasTestPage() {
 
   const handleLoadSVG = async (svgString: string) => {
     try {
-      // Magia: Convertimos el string SVG crudo a nuestro SceneNode validado (GroupNode)
+      // Convert the raw SVG string to our validated SceneNode (GroupNode)
       const groupNode = await parseSVGToGroupNode(svgString);
 
-      // Lo añadimos al estado global (Zustand). El Renderer lo detectará y lo dibujará solo.
+      // Add it to global state (Zustand). The renderer will detect and draw it automatically.
       addNode(groupNode);
     } catch (error) {
       console.error("No se pudo parsear el SVG", error);
@@ -83,8 +83,8 @@ export default function CanvasTestPage() {
             }
             onClick={handleTestConnection}
           >
-            {dbStatus === 'ok' ? '✓ Supabase Connected' :
-             dbStatus === 'error' ? '✗ Connection Failed' :
+            {dbStatus === 'ok' ? 'Supabase Connected' :
+             dbStatus === 'error' ? 'Connection Failed' :
              'Test Supabase'}
           </Button>
           <Button variant="destructive" onClick={clear}>Limpiar Canvas</Button>
@@ -111,7 +111,7 @@ export default function CanvasTestPage() {
         </div>
       </header>
 
-      {/* Aquí es donde FabricJS inyectará física y visualmente el <canvas> */}
+      {/* This is where FabricJS physically injects the <canvas> element */}
       <div 
         ref={canvasContainerRef} 
         className="flex-1 w-full relative overflow-hidden bg-white" 

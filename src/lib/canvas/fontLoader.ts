@@ -1,37 +1,37 @@
 export async function loadGoogleFonts(fonts: string[]) {
   if (!fonts || fonts.length === 0) return;
 
-  // 1. Filtramos las que ya están cargadas en el documento para no repetir
-  const fontsToLoad = fonts.filter(font => 
+  // 1. Filter out fonts already loaded in the document to avoid duplicates
+  const fontsToLoad = fonts.filter(font =>
     !document.fonts.check(`12px "${font}"`)
   );
 
-  if (fontsToLoad.length === 0) return; // Ya están todas listas
+  if (fontsToLoad.length === 0) return; // All fonts are already loaded
 
-  console.log(`📥 Descargando fuentes: ${fontsToLoad.join(', ')}`);
+  console.log(`Downloading fonts: ${fontsToLoad.join(', ')}`);
 
-  // 2. Construimos la URL de Google Fonts
-  // Formato: family=Font1:wght@400;700&family=Font2&display=swap
+  // 2. Build the Google Fonts URL
+  // Format: family=Font1:wght@400;700&family=Font2&display=swap
   const fontQuery = fontsToLoad
-    .map(font => `family=${font.replace(/ /g, '+')}:wght@100..900`) // Pedimos todos los pesos
+    .map(font => `family=${font.replace(/ /g, '+')}:wght@100..900`) // Request all weights
     .join('&');
 
   const url = `https://fonts.googleapis.com/css2?${fontQuery}&display=swap`;
 
-  // 3. Creamos el link tag dinámicamente y esperamos que el CSS esté descargado
+  // 3. Dynamically create the link tag and wait for the CSS to be downloaded
   await new Promise<void>((resolve) => {
     const link = document.createElement('link');
     link.href = url;
     link.rel = 'stylesheet';
     link.onload = () => resolve();
-    link.onerror = () => resolve(); // Continuar aunque falle (mejor que quedarse colgado)
+    link.onerror = () => resolve(); // Continue even on error (better than hanging indefinitely)
     document.head.appendChild(link);
   });
 
-  // 4. ESPERAR A QUE ESTÉN LISTAS (La parte crítica para Fabric.js)
-  // Ahora que el CSS fue parseado, document.fonts.load() puede encontrar las fuentes
+  // 4. WAIT FOR FONTS TO BE READY (The critical part for Fabric.js)
+  // Now that the CSS is parsed, document.fonts.load() can find the fonts
   const promises = fontsToLoad.map(font => document.fonts.load(`1em "${font}"`));
 
   await Promise.all(promises);
-  console.log('✅ Fuentes listas para pintar');
+  console.log('Fonts ready to render');
 }
