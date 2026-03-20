@@ -21,8 +21,8 @@ export const CanvasV2 = forwardRef<CanvasV2Handle, CanvasV2Props>(
     const { isOver, setNodeRef } = useDroppable({ id: "canvas-area" });
 
     const { resize, exportImage, getThumbnailDataURL } = useCanvasRenderer(canvasRef, {
-      width: typeof window !== 'undefined' ? window.innerWidth - 320 : 800,
-      height: typeof window !== 'undefined' ? window.innerHeight : 600,
+      width: 800,
+      height: 600,
       backgroundColor: "#F9FAFB"
     });
 
