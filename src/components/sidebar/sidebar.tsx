@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { SVG_LIBRARY } from "@/data/library";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,11 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Bold, Italic, BringToFront, SendToBack, ChevronUp, ChevronDown, Download, Save, Check, Loader2, Trash2 } from "lucide-react";
+import {
+  ArrowLeft, Bold, Italic, Underline, Strikethrough,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  BringToFront, SendToBack, ChevronUp, ChevronDown,
+  Download, Save, Check, Loader2, Trash2,
+} from "lucide-react";
 import { FabricThumbnail } from "@/components/canvas/FabricThumbnail";
 import { useSelectedNode, useCanvasActions } from "@/lib/canvas";
 import { useCanvasStore } from "@/lib/canvas/store";
-import type { SceneNode, TextNode } from "@/lib/canvas";
+import type { SceneNode, TextNode, RectNode, Shadow } from "@/lib/canvas";
 
 // --- MAIN SIDEBAR ---
 export function Sidebar({
@@ -140,17 +145,6 @@ function BlockEditor({
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [saveAsName, setSaveAsName] = useState('');
   const [saveAsState, setSaveAsState] = useState<'idle' | 'saving' | 'saved'>('idle');
-  const colorInputRef = useRef<HTMLInputElement>(null);
-
-  // Listen for the native 'change' event (fires when the picker closes)
-  // to commit the live update as a single undo step.
-  useEffect(() => {
-    const el = colorInputRef.current;
-    if (!el) return;
-    const handleChange = () => onCommitLiveUpdate();
-    el.addEventListener('change', handleChange);
-    return () => el.removeEventListener('change', handleChange);
-  }, [onCommitLiveUpdate]);
 
   const handleSave = async () => {
     if (!onSave || !templateName.trim()) return;
@@ -200,30 +194,32 @@ function BlockEditor({
         <div className="space-y-6">
           {/* Text Formatting — only for textbox nodes */}
           {node.type === 'textbox' && (
-            <TextFormattingPanel node={node} onUpdateProperty={onUpdateProperty} />
+            <TextFormattingPanel node={node as TextNode} onUpdateProperty={onUpdateProperty} />
           )}
 
-          {/* Color Picker */}
+          {/* Opacity */}
+          <OpacityPanel node={node} onUpdatePropertyLive={onUpdatePropertyLive} onCommitLiveUpdate={onCommitLiveUpdate} />
+
+          {/* Fill Color */}
           <div className="space-y-2">
-            <Label htmlFor="color-picker">Fill Color</Label>
-            <div className="flex items-center gap-3">
-              <div className="relative overflow-hidden rounded-md border shadow-sm w-10 h-10">
-                <input
-                  ref={colorInputRef}
-                  id="color-picker"
-                  type="color"
-                  value={fillColorString}
-                  onChange={(e) => onUpdatePropertyLive('fill', e.target.value)}
-                  className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-0 p-0"
-                />
-              </div>
-              <Input
-                value={fillColorString}
-                onChange={(e) => onUpdateProperty('fill', e.target.value)}
-                className="font-mono uppercase w-28"
-              />
-            </div>
+            <Label>Fill Color</Label>
+            <LiveColorInput
+              value={fillColorString}
+              onLive={(color) => onUpdatePropertyLive('fill', color)}
+              onCommit={onCommitLiveUpdate}
+            />
           </div>
+
+          {/* Stroke */}
+          <StrokePanel node={node} onUpdateProperty={onUpdateProperty} onUpdatePropertyLive={onUpdatePropertyLive} onCommitLiveUpdate={onCommitLiveUpdate} />
+
+          {/* Border Radius — rect only */}
+          {node.type === 'rect' && (
+            <BorderRadiusPanel node={node as RectNode} onUpdateProperty={onUpdateProperty} />
+          )}
+
+          {/* Shadow */}
+          <ShadowPanel node={node} onUpdateProperty={onUpdateProperty} onUpdatePropertyLive={onUpdatePropertyLive} onCommitLiveUpdate={onCommitLiveUpdate} />
 
           {/* Layer Arrangement */}
           <ArrangePanel nodeId={node.id} />
@@ -288,6 +284,47 @@ function BlockEditor({
   );
 }
 
+// --- LIVE COLOR INPUT ---
+// Reusable color picker: React onChange → live update; native 'change' (picker close) → commit.
+function LiveColorInput({
+  value,
+  onLive,
+  onCommit,
+}: {
+  value: string;
+  onLive: (color: string) => void;
+  onCommit: () => void;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const handle = () => onCommit();
+    el.addEventListener('change', handle);
+    return () => el.removeEventListener('change', handle);
+  }, [onCommit]);
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="relative overflow-hidden rounded-md border shadow-sm w-10 h-10 flex-shrink-0">
+        <input
+          ref={ref}
+          type="color"
+          value={value}
+          onChange={(e) => onLive(e.target.value)}
+          className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-0 p-0"
+        />
+      </div>
+      <Input
+        value={value}
+        onChange={(e) => onLive(e.target.value)}
+        className="font-mono uppercase w-28"
+      />
+    </div>
+  );
+}
+
 // --- TEXT FORMATTING PANEL ---
 function TextFormattingPanel({
   node,
@@ -320,7 +357,7 @@ function TextFormattingPanel({
         />
       </div>
 
-      {/* Bold / Italic toggles */}
+      {/* Style toggles */}
       <div className="flex gap-2">
         <Button
           variant={isBold ? 'default' : 'outline'}
@@ -338,7 +375,377 @@ function TextFormattingPanel({
         >
           <Italic className="h-4 w-4" />
         </Button>
+        <Button
+          variant={node.underline ? 'default' : 'outline'}
+          size="icon"
+          onClick={() => onUpdateProperty('underline', !node.underline)}
+          aria-label="Toggle underline"
+        >
+          <Underline className="h-4 w-4" />
+        </Button>
+        <Button
+          variant={node.linethrough ? 'default' : 'outline'}
+          size="icon"
+          onClick={() => onUpdateProperty('linethrough', !node.linethrough)}
+          aria-label="Toggle strikethrough"
+        >
+          <Strikethrough className="h-4 w-4" />
+        </Button>
       </div>
+
+      {/* Alignment */}
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">Alignment</Label>
+        <div className="flex gap-1">
+          {(['left', 'center', 'right', 'justify'] as const).map((align) => {
+            const Icon = align === 'left' ? AlignLeft : align === 'center' ? AlignCenter : align === 'right' ? AlignRight : AlignJustify;
+            return (
+              <Button
+                key={align}
+                variant={node.textAlign === align ? 'default' : 'outline'}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => onUpdateProperty('textAlign', align)}
+                aria-label={`Align ${align}`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Text Transform */}
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">Transform</Label>
+        <div className="flex gap-1">
+          {([
+            { value: 'none', label: 'Ag' },
+            { value: 'uppercase', label: 'AA' },
+            { value: 'lowercase', label: 'aa' },
+            { value: 'capitalize', label: 'Aa' },
+          ] as const).map(({ value, label }) => (
+            <Button
+              key={value}
+              variant={node.textTransform === value ? 'default' : 'outline'}
+              size="sm"
+              className="h-8 px-2 text-xs font-mono"
+              onClick={() => onUpdateProperty('textTransform', value)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Line Height */}
+      <div className="space-y-1">
+        <Label htmlFor="line-height" className="text-xs text-muted-foreground">Line Height</Label>
+        <Input
+          id="line-height"
+          type="number"
+          min={0.5}
+          max={3.0}
+          step={0.1}
+          value={node.lineHeight}
+          onChange={(e) => {
+            const val = Number(e.target.value);
+            if (val >= 0.5 && val <= 3.0) onUpdateProperty('lineHeight', val);
+          }}
+          className="w-24"
+        />
+      </div>
+
+      {/* Char Spacing */}
+      <div className="space-y-1">
+        <Label htmlFor="char-spacing" className="text-xs text-muted-foreground">Letter Spacing</Label>
+        <Input
+          id="char-spacing"
+          type="number"
+          min={-200}
+          max={800}
+          step={10}
+          value={node.charSpacing}
+          onChange={(e) => {
+            const val = Number(e.target.value);
+            if (val >= -200 && val <= 800) onUpdateProperty('charSpacing', val);
+          }}
+          className="w-24"
+        />
+      </div>
+    </div>
+  );
+}
+
+// --- OPACITY PANEL ---
+function OpacityPanel({
+  node,
+  onUpdatePropertyLive,
+  onCommitLiveUpdate,
+}: {
+  node: SceneNode;
+  onUpdatePropertyLive: (property: string, value: unknown) => void;
+  onCommitLiveUpdate: () => void;
+}) {
+  const pct = Math.round(node.opacity * 100);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label>Opacity</Label>
+        <span className="text-xs text-muted-foreground w-10 text-right">{pct}%</span>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={1}
+        value={pct}
+        onChange={(e) => onUpdatePropertyLive('opacity', Number(e.target.value) / 100)}
+        onPointerUp={onCommitLiveUpdate}
+        className="w-full h-2 accent-foreground cursor-pointer"
+      />
+    </div>
+  );
+}
+
+// --- STROKE PANEL ---
+function StrokePanel({
+  node,
+  onUpdateProperty,
+  onUpdatePropertyLive,
+  onCommitLiveUpdate,
+}: {
+  node: SceneNode;
+  onUpdateProperty: (property: string, value: unknown) => void;
+  onUpdatePropertyLive: (property: string, value: unknown) => void;
+  onCommitLiveUpdate: () => void;
+}) {
+  const hasStroke = node.stroke !== null;
+
+  const enableStroke = () => {
+    onUpdateProperty('stroke', '#000000');
+    onUpdateProperty('strokeWidth', 1);
+  };
+
+  const disableStroke = () => {
+    onUpdateProperty('stroke', null);
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label>Stroke</Label>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 text-xs px-2"
+          onClick={hasStroke ? disableStroke : enableStroke}
+        >
+          {hasStroke ? 'Remove' : 'Add'}
+        </Button>
+      </div>
+
+      {hasStroke && (
+        <div className="space-y-3">
+          <LiveColorInput
+            value={node.stroke!}
+            onLive={(color) => onUpdatePropertyLive('stroke', color)}
+            onCommit={onCommitLiveUpdate}
+          />
+
+          <div className="space-y-1">
+            <Label htmlFor="stroke-width" className="text-xs text-muted-foreground">Width</Label>
+            <Input
+              id="stroke-width"
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              value={node.strokeWidth}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                if (val >= 0) onUpdateProperty('strokeWidth', val);
+              }}
+              className="w-24"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Dash Style</Label>
+            <div className="flex gap-1">
+              {([
+                { label: '—', value: null },
+                { label: '- -', value: [10, 5] },
+                { label: '···', value: [2, 5] },
+              ] as const).map(({ label, value }) => {
+                const current = JSON.stringify(node.strokeDashArray ?? null);
+                const target = JSON.stringify(value);
+                return (
+                  <Button
+                    key={label}
+                    variant={current === target ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-8 px-3 text-xs font-mono"
+                    onClick={() => onUpdateProperty('strokeDashArray', value)}
+                  >
+                    {label}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- BORDER RADIUS PANEL (rect only) ---
+function BorderRadiusPanel({
+  node,
+  onUpdateProperty,
+}: {
+  node: RectNode;
+  onUpdateProperty: (property: string, value: unknown) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label>Border Radius</Label>
+      <div className="flex gap-3">
+        <div className="space-y-1">
+          <Label htmlFor="rx" className="text-xs text-muted-foreground">rx</Label>
+          <Input
+            id="rx"
+            type="number"
+            min={0}
+            step={1}
+            value={node.rx}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              if (val >= 0) onUpdateProperty('rx', val);
+            }}
+            className="w-20"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="ry" className="text-xs text-muted-foreground">ry</Label>
+          <Input
+            id="ry"
+            type="number"
+            min={0}
+            step={1}
+            value={node.ry}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              if (val >= 0) onUpdateProperty('ry', val);
+            }}
+            className="w-20"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- SHADOW PANEL ---
+function ShadowPanel({
+  node,
+  onUpdateProperty,
+  onUpdatePropertyLive,
+  onCommitLiveUpdate,
+}: {
+  node: SceneNode;
+  onUpdateProperty: (property: string, value: unknown) => void;
+  onUpdatePropertyLive: (property: string, value: unknown) => void;
+  onCommitLiveUpdate: () => void;
+}) {
+  const shadow = node.shadow as Shadow | null;
+  const hasShadow = shadow !== null;
+
+  const enableShadow = () => {
+    onUpdateProperty('shadow', { color: '#000000', blur: 4, offsetX: 2, offsetY: 2 });
+  };
+
+  const disableShadow = () => {
+    onUpdateProperty('shadow', null);
+  };
+
+  const updateShadow = (field: keyof Shadow, value: unknown) => {
+    if (!shadow) return;
+    onUpdateProperty('shadow', { ...shadow, [field]: value });
+  };
+
+  const updateShadowLive = (field: keyof Shadow, value: unknown) => {
+    if (!shadow) return;
+    onUpdatePropertyLive('shadow', { ...shadow, [field]: value });
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label>Shadow</Label>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 text-xs px-2"
+          onClick={hasShadow ? disableShadow : enableShadow}
+        >
+          {hasShadow ? 'Remove' : 'Add'}
+        </Button>
+      </div>
+
+      {hasShadow && shadow && (
+        <div className="space-y-3">
+          <LiveColorInput
+            value={shadow.color}
+            onLive={(color) => updateShadowLive('color', color)}
+            onCommit={onCommitLiveUpdate}
+          />
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-muted-foreground">Blur</Label>
+              <span className="text-xs text-muted-foreground">{shadow.blur}</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={50}
+              step={1}
+              value={shadow.blur}
+              onChange={(e) => updateShadowLive('blur', Number(e.target.value))}
+              onPointerUp={onCommitLiveUpdate}
+              className="w-full h-2 accent-foreground cursor-pointer"
+            />
+          </div>
+
+          <div className="flex gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="shadow-x" className="text-xs text-muted-foreground">Offset X</Label>
+              <Input
+                id="shadow-x"
+                type="number"
+                step={1}
+                value={shadow.offsetX}
+                onChange={(e) => updateShadow('offsetX', Number(e.target.value))}
+                className="w-20"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="shadow-y" className="text-xs text-muted-foreground">Offset Y</Label>
+              <Input
+                id="shadow-y"
+                type="number"
+                step={1}
+                value={shadow.offsetY}
+                onChange={(e) => updateShadow('offsetY', Number(e.target.value))}
+                className="w-20"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -391,7 +798,6 @@ function DraggableSidebarItem({ item }: { item: any }) {
           } aspect-[2/1]`}
       >
         <div className="w-full h-full flex items-center justify-center p-0">
-          {/* Renderizamos el Thumbnail a partir del JSON */}
           {item.type === 'JSON' && item.canvasData ? (
             <FabricThumbnail jsonData={item.canvasData} />
           ) : (
