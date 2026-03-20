@@ -18,16 +18,20 @@ export async function loadGoogleFonts(fonts: string[]) {
 
   const url = `https://fonts.googleapis.com/css2?${fontQuery}&display=swap`;
 
-  // 3. Creamos el link tag dinámicamente
-  const link = document.createElement('link');
-  link.href = url;
-  link.rel = 'stylesheet';
-  document.head.appendChild(link);
+  // 3. Creamos el link tag dinámicamente y esperamos que el CSS esté descargado
+  await new Promise<void>((resolve) => {
+    const link = document.createElement('link');
+    link.href = url;
+    link.rel = 'stylesheet';
+    link.onload = () => resolve();
+    link.onerror = () => resolve(); // Continuar aunque falle (mejor que quedarse colgado)
+    document.head.appendChild(link);
+  });
 
   // 4. ESPERAR A QUE ESTÉN LISTAS (La parte crítica para Fabric.js)
-  // document.fonts.load() devuelve una promesa que se resuelve cuando la fuente es usable
+  // Ahora que el CSS fue parseado, document.fonts.load() puede encontrar las fuentes
   const promises = fontsToLoad.map(font => document.fonts.load(`1em "${font}"`));
-  
+
   await Promise.all(promises);
   console.log('✅ Fuentes listas para pintar');
 }
