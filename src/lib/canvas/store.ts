@@ -132,6 +132,9 @@ interface CanvasState {
 
   /** Flat index for O(1) node lookups — rebuilt after each tree mutation */
   _nodeIndex: Map<string, SceneNode>
+
+  /** Snapshot captured before the first live update (e.g. color picker drag) */
+  _liveUpdateSnapshot: GroupNode | null
 }
 
 interface CanvasActions {
@@ -147,6 +150,22 @@ interface CanvasActions {
     property: string,
     value: unknown
   ) => void
+
+  /**
+   * Like updateNodeProperty but skips history. Use for continuous inputs
+   * (e.g. color picker drag). Call commitLiveUpdate() when the interaction ends.
+   */
+  updateNodePropertyLive: (
+    nodeId: string,
+    property: string,
+    value: unknown
+  ) => void
+
+  /**
+   * Commits the live update session: pushes the pre-edit snapshot to history
+   * so the entire drag collapses into a single undo step.
+   */
+  commitLiveUpdate: () => void
 
   /**
    * Updates multiple properties on a node in a single atomic operation.
@@ -234,6 +253,7 @@ export const useCanvasStore = create<CanvasStore>()(
 
         root: null,
         selectedNodeIds: [],
+        _liveUpdateSnapshot: null,
         history: {
           past: [],
           present: null as unknown as GroupNode,
@@ -294,6 +314,58 @@ export const useCanvasStore = create<CanvasStore>()(
           if (newState.root) {
             set({ _nodeIndex: buildNodeIndex(newState.root) })
           }
+        },
+
+        updateNodePropertyLive: (
+          nodeId: string,
+          property: string,
+          value: unknown
+        ) => {
+          const state = get()
+          if (!state.root) {
+            throw new InvalidOperationError('Scene Graph is not initialized')
+          }
+
+          const existingNode = state._nodeIndex.get(nodeId)
+          if (!existingNode) {
+            throw new NodeNotFoundError(nodeId)
+          }
+
+          const updatedSnapshot = { ...existingNode, [property]: value }
+          const parseResult = SceneNodeSchema.safeParse(updatedSnapshot)
+          if (!parseResult.success) {
+            throw parseResult.error
+          }
+
+          set((draft) => {
+            // Capture pre-edit root on the first live update
+            if (!draft._liveUpdateSnapshot) {
+              draft._liveUpdateSnapshot = JSON.parse(JSON.stringify(draft.root)) as GroupNode
+            }
+
+            const draftNode = findNodeInTree(draft.root!, nodeId)
+            if (!draftNode) return
+            ; (draftNode as Record<string, unknown>)[property] = value
+          })
+
+          const newState = get()
+          if (newState.root) {
+            set({ _nodeIndex: buildNodeIndex(newState.root) })
+          }
+        },
+
+        commitLiveUpdate: () => {
+          const state = get()
+          if (!state._liveUpdateSnapshot) return
+
+          set((draft) => {
+            draft.history.past.push(draft._liveUpdateSnapshot!)
+            draft.history.future = []
+            if (draft.history.past.length > draft.history.maxSize) {
+              draft.history.past.shift()
+            }
+            draft._liveUpdateSnapshot = null
+          })
         },
 
         updateMultipleProperties: (
@@ -804,6 +876,7 @@ export function useCanvasActions() {
   return useCanvasStore(useShallow((state) => ({
     updateNodeProperty: state.updateNodeProperty,
     updateNodePropertyLive: state.updateNodePropertyLive,
+    commitLiveUpdate: state.commitLiveUpdate,
     updateMultipleProperties: state.updateMultipleProperties,
     deleteNode: state.deleteNode,
     addNode: state.addNode,

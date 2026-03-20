@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { SVG_LIBRARY } from "@/data/library";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -23,7 +23,7 @@ export function Sidebar({
   onSave?: (name: string) => Promise<void>
 }) {
   const selectedNode = useSelectedNode();
-  const { clearSelection, updateNodeProperty } = useCanvasActions();
+  const { clearSelection, updateNodeProperty, updateNodePropertyLive, commitLiveUpdate } = useCanvasActions();
 
   return (
     <div className="h-full border-l bg-background flex flex-col w-80 shadow-sm z-10">
@@ -31,6 +31,8 @@ export function Sidebar({
         <BlockEditor
           node={selectedNode}
           onUpdateProperty={(property, value) => updateNodeProperty(selectedNode.id, property, value)}
+          onUpdatePropertyLive={(property, value) => updateNodePropertyLive(selectedNode.id, property, value)}
+          onCommitLiveUpdate={commitLiveUpdate}
           onBack={clearSelection}
           onExport={onExport}
           onSave={onSave}
@@ -71,18 +73,33 @@ function TemplateLibrary() {
 function BlockEditor({
   node,
   onUpdateProperty,
+  onUpdatePropertyLive,
+  onCommitLiveUpdate,
   onBack,
   onExport,
   onSave,
 }: {
   node: SceneNode;
   onUpdateProperty: (property: string, value: unknown) => void;
+  onUpdatePropertyLive: (property: string, value: unknown) => void;
+  onCommitLiveUpdate: () => void;
   onBack: () => void;
   onExport?: () => void;
   onSave?: (name: string) => Promise<void>;
 }) {
   const [templateName, setTemplateName] = useState('');
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const colorInputRef = useRef<HTMLInputElement>(null);
+
+  // Listen for the native 'change' event (fires when the picker closes)
+  // to commit the live update as a single undo step.
+  useEffect(() => {
+    const el = colorInputRef.current;
+    if (!el) return;
+    const handleChange = () => onCommitLiveUpdate();
+    el.addEventListener('change', handleChange);
+    return () => el.removeEventListener('change', handleChange);
+  }, [onCommitLiveUpdate]);
 
   const handleSave = async () => {
     if (!onSave || !templateName.trim()) return;
@@ -127,10 +144,11 @@ function BlockEditor({
             <div className="flex items-center gap-3">
               <div className="relative overflow-hidden rounded-md border shadow-sm w-10 h-10">
                 <input
+                  ref={colorInputRef}
                   id="color-picker"
                   type="color"
                   value={fillColorString}
-                  onChange={(e) => onUpdateProperty('fill', e.target.value)}
+                  onChange={(e) => onUpdatePropertyLive('fill', e.target.value)}
                   className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer border-0 p-0"
                 />
               </div>
