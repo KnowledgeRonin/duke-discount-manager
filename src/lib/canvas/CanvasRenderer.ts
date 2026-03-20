@@ -143,7 +143,7 @@ export class CanvasRenderer {
     // Text-specific properties
     if (node.type === 'textbox' && fabricObject instanceof fabric.Textbox) {
       fabricObject.set({
-        text: node.text,
+        text: this.applyTextTransform(node.text, node.textTransform),
         fontFamily: node.fontFamily,
         fontSize: node.fontSize,
         fontWeight: node.fontWeight as string | number,
@@ -379,11 +379,20 @@ export class CanvasRenderer {
     }
   }
 
+  private applyTextTransform(text: string, transform: string): string {
+    switch (transform) {
+      case 'uppercase': return text.toUpperCase()
+      case 'lowercase': return text.toLowerCase()
+      case 'capitalize': return text.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
+      default: return text
+    }
+  }
+
   private createTextbox(
     node: TextNode,
     baseProps: Partial<fabric.FabricObjectProps>
   ): fabric.Textbox {
-    return new fabric.Textbox(node.text, {
+    return new fabric.Textbox(this.applyTextTransform(node.text, node.textTransform), {
       ...baseProps,
       fontFamily: node.fontFamily,
       fontSize: node.fontSize,
