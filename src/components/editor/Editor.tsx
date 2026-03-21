@@ -152,7 +152,7 @@ export function Editor({ templateId, templateName }: { templateId?: string; temp
           onSave={async (name) => {
             const root = useCanvasStore.getState().root;
             if (!root) throw new Error('Canvas is empty');
-            const thumbnail = canvasV2Ref.current?.getThumbnailDataURL() ?? null;
+            const thumbnail = (await canvasV2Ref.current?.getThumbnailDataURL()) ?? null;
             try {
               if (templateId) {
                 await updateTemplate(templateId, name, root, thumbnail);
@@ -169,7 +169,7 @@ export function Editor({ templateId, templateName }: { templateId?: string; temp
           onSaveAs={async (name) => {
             const root = useCanvasStore.getState().root;
             if (!root) throw new Error('Canvas is empty');
-            const thumbnail = canvasV2Ref.current?.getThumbnailDataURL() ?? null;
+            const thumbnail = (await canvasV2Ref.current?.getThumbnailDataURL()) ?? null;
             try {
               await saveTemplate(name, root, thumbnail);
               toast.success('Template saved!');

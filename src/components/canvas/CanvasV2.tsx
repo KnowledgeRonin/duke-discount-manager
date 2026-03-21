@@ -6,7 +6,7 @@ import { useCanvasRenderer } from "@/lib/canvas/useCanvasRenderer";
 
 export interface CanvasV2Handle {
   exportImage: (options?: { format?: 'png' | 'jpeg'; multiplier?: number; quality?: number }) => void;
-  getThumbnailDataURL: () => string | null;
+  getThumbnailDataURL: () => Promise<string | null>;
 }
 
 interface CanvasV2Props {

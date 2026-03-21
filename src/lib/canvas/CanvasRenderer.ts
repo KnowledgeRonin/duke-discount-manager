@@ -723,9 +723,34 @@ export class CanvasRenderer {
 
   /**
    * Returns the canvas as a base64 data URL without triggering a download.
-   * Used internally for thumbnail generation before saving to the DB.
+   * Loads any Google Fonts used on the canvas before capturing so the
+   * stored thumbnail reflects the correct typefaces, not the browser fallback.
    */
-  getThumbnailDataURL(multiplier = 1): string {
+  async getThumbnailDataURL(multiplier = 1): Promise<string> {
+    const systemFonts = new Set(['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'sans-serif', 'serif'])
+    const fontPairs: Array<{ family: string; weight: string | number }> = []
+
+    const collectFonts = (objects: fabric.FabricObject[]) => {
+      objects.forEach((obj) => {
+        if (obj instanceof fabric.Textbox && obj.fontFamily) {
+          const family = obj.fontFamily.split(',')[0].trim()
+          if (!systemFonts.has(family)) {
+            fontPairs.push({ family, weight: obj.fontWeight ?? 400 })
+          }
+        }
+        if (obj instanceof fabric.Group) collectFonts(obj.getObjects())
+      })
+    }
+    collectFonts(this.canvas.getObjects())
+
+    if (fontPairs.length > 0) {
+      await Promise.allSettled(
+        fontPairs.map(({ family, weight }) =>
+          document.fonts.load(`${weight} 12px "${family}"`)
+        )
+      )
+    }
+
     this.canvas.discardActiveObject()
     this.canvas.renderAll()
     return this.canvas.toDataURL({ format: 'png', multiplier, quality: 0.8 })

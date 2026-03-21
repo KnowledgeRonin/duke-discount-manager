@@ -165,7 +165,7 @@ export function useCanvasRenderer(
     rendererRef.current?.exportImage(options)
   }, [])
 
-  const getThumbnailDataURL = useCallback(() => {
+  const getThumbnailDataURL = useCallback(async () => {
     return rendererRef.current?.getThumbnailDataURL() ?? null
   }, [])
 

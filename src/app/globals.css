@@ -1,7 +1,45 @@
-@import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@100..900&family=Poppins:wght@400;600;800&display=swap');
-
 @import "tailwindcss";
 @custom-variant dark (&:is(.dark *));
+
+/* ─── Locally hosted fonts ───────────────────────────────────────────────────
+   These @font-face rules register fonts under their original family names so
+   that Fabric.js canvas rendering, document.fonts, and the browser all resolve
+   "Big Shoulders Display" and "Poppins" from local files — no Google Fonts
+   network calls needed at runtime.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Big Shoulders Display */
+@font-face { font-family: "Big Shoulders Display"; src: url("../../public/fonts/bigshouldersdisplay-thin-webfont.woff2") format("woff2"); font-weight: 100; font-style: normal; font-display: swap; }
+@font-face { font-family: "Big Shoulders Display"; src: url("../../public/fonts/bigshouldersdisplay-light-webfont.woff2") format("woff2"); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: "Big Shoulders Display"; src: url("../../public/fonts/bigshouldersdisplay-regular-webfont.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Big Shoulders Display"; src: url("../../public/fonts/bigshouldersdisplay-medium-webfont.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Big Shoulders Display"; src: url("../../public/fonts/bigshouldersdisplay-semibold-webfont.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "Big Shoulders Display"; src: url("../../public/fonts/bigshouldersdisplay-bold-webfont.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Big Shoulders Display"; src: url("../../public/fonts/bigshouldersdisplay-extrabold-webfont.woff2") format("woff2"); font-weight: 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "Big Shoulders Display"; src: url("../../public/fonts/bigshouldersdisplay-black-webfont.woff2") format("woff2"); font-weight: 900; font-style: normal; font-display: swap; }
+
+/* Spaceport */
+@font-face { font-family: "Spaceport"; src: url("../../public/fonts/spaceport1-webfont.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+
+/* Poppins */
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-thin-webfont.woff2") format("woff2"); font-weight: 100; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-thinitalic-webfont.woff2") format("woff2"); font-weight: 100; font-style: italic; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-extralight-webfont.woff2") format("woff2"); font-weight: 200; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-extralightitalic-webfont.woff2") format("woff2"); font-weight: 200; font-style: italic; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-light-webfont.woff2") format("woff2"); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-lightitalic-webfont.woff2") format("woff2"); font-weight: 300; font-style: italic; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-regular-webfont.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-italic-webfont.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-medium-webfont.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-mediumitalic-webfont.woff2") format("woff2"); font-weight: 500; font-style: italic; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-semibold-webfont.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-semibolditalic-webfont.woff2") format("woff2"); font-weight: 600; font-style: italic; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-bold-webfont.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-bolditalic-webfont.woff2") format("woff2"); font-weight: 700; font-style: italic; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-extrabold-webfont.woff2") format("woff2"); font-weight: 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-extrabolditalic-webfont.woff2") format("woff2"); font-weight: 800; font-style: italic; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-black-webfont.woff2") format("woff2"); font-weight: 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/fonts/poppins-blackitalic-webfont.woff2") format("woff2"); font-weight: 900; font-style: italic; font-display: swap; }
 
 @theme inline {
   --color-background: var(--background);
