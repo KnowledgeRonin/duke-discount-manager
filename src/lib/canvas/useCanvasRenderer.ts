@@ -78,11 +78,12 @@ export function useCanvasRenderer(
       }
     })
 
-    // If the store already has a root, initialize the canvas
+    // If the store already has a root, initialize the canvas.
+    // fitToScreen() is deferred — initialize() sets _needsFit so the
+    // next resize() call (from CanvasV2) will fit with correct dimensions.
     const currentRoot = useCanvasStore.getState().root
     if (currentRoot) {
       renderer.initialize(currentRoot)
-      renderer.fitToScreen()
       prevRootRef.current = currentRoot
     }
 
@@ -116,13 +117,14 @@ export function useCanvasRenderer(
       if (fromFabricEventRef.current) return
 
       const rootChanged = state.root !== prevState.root
+      const initialLoad = prevState.root == null && state.root != null
       const objectCountChanged =
         prevState.root != null &&
         state.root.objects.length !== prevState.root.objects.length
 
       if (rootChanged || objectCountChanged) {
         renderer.syncTree(state.root)
-        if (objectCountChanged) {
+        if (initialLoad || objectCountChanged) {
           renderer.fitToScreen()
         }
       }

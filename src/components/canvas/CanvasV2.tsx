@@ -29,23 +29,19 @@ export const CanvasV2 = forwardRef<CanvasV2Handle, CanvasV2Props>(
     useImperativeHandle(ref, () => ({ exportImage, getThumbnailDataURL }), [exportImage, getThumbnailDataURL]);
 
     useEffect(() => {
-      if (!containerRef.current) return;
+      const container = containerRef.current;
+      if (!container) return;
 
-      const handleResize = () => {
-        const parent = containerRef.current;
-        if (!parent) return;
-
-        const width = parent.clientWidth;
-        const height = parent.clientHeight;
+      const ro = new ResizeObserver(() => {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
 
         resize(width, height);
         onDimensionsChange?.({ width, height });
-      };
+      });
 
-      handleResize();
-
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
+      ro.observe(container);
+      return () => ro.disconnect();
     }, [resize, onDimensionsChange]);
 
     return (

@@ -674,7 +674,11 @@ export class CanvasRenderer {
     const objects = this.canvas.getObjects()
     if (objects.length === 0) return
 
-    // Calculate the bounding box of all objects (in canvas coordinates, before zoom)
+    // Reset viewport to identity so getBoundingRect returns object
+    // coordinates, not screen coordinates from a previous zoom/pan.
+    this.canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
+
+    // Calculate the bounding box of all objects in object coordinates
     const bounds = objects.reduce(
       (acc, obj) => {
         const r = obj.getBoundingRect()
@@ -718,7 +722,7 @@ export class CanvasRenderer {
   resize(width: number, height: number): void {
     this.canvas.setDimensions({ width, height })
     this.canvas.calcOffset()
-    this.canvas.requestRenderAll()
+    this.fitToScreen()
   }
 
   /**
