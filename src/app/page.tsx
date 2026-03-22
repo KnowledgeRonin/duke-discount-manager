@@ -35,7 +35,7 @@ export default function Dashboard() {
       {/* Header */}
       <header className="border-b px-8 py-5 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: '"Spaceport", sans-serif' }}>Duke Discount Manager</h1>
+          <h1 className="text-2xl font-bold" style={{ fontFamily: '"Spaceport", sans-serif' }}>Duke Discount Manager</h1>
           <p className="text-sm text-muted-foreground">Your saved templates</p>
         </div>
         <Button className="gap-2" onClick={() => router.push('/editor')}>
